@@ -15,3 +15,4 @@
 - To generate an EQ table of size $m \times m$, rearrange the positions of the $1 \times m$ string.
 - Interpolation polynomial for $H, V$
 - Algorithm for update Horizon, Vertical Table
+- Noise Anaysis for $H,V$ and noise management with bootstrapping
