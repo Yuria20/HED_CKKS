@@ -60,7 +60,7 @@ dist_sym = 20
 - `H`, `V`  
   `Hsym`, `Vsym`에 inverse mapping `g_inv`를 적용해서 얻은 정수값 결과이다.
 
-  각 anti-diagonal의 값은 `{-1, 0, 1}` 중 하나로 양자화된다.
+  각 anti-diagonal의 값은 `{-1, 0, 1}` 중 가장 가까운 값으로 변환된다.
 
 ### 거리 관련 항목
 
