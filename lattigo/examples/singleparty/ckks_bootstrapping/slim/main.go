@@ -36,6 +36,7 @@ import (
 	"flag"
 	"fmt"
 	"math"
+	"math/big"
 
 	"github.com/tuneinsight/lattigo/v6/circuits/ckks/bootstrapping"
 	"github.com/tuneinsight/lattigo/v6/circuits/ckks/dft"
@@ -81,12 +82,13 @@ func main() {
 	qiSlotsToCoeffs := []int{39, 39, 39} // 1) SlotsToCoeffs
 
 	// len(qiCircuitsSlots) = available depth
-	qiCircuitSlots := []int{LogDefaultScale}           // 0) Circuit in the slot domain
-	qiEvalMod := []int{60, 60, 60, 60, 60, 60, 60, 60} // 6) EvalMod
-	qiCoeffsToSlots := []int{56, 56, 56, 56}           // 5) CoeffsToSlots
+	qiCircuitSlots := []int{45, 45, 45, 45, 45, 45, 45, 45, 45, 45} // 0) Circuit in the slot domain
+	qiEvalMod := []int{60, 60, 60, 60, 60, 60, 60, 60}              // 6) EvalMod
+	qiCoeffsToSlots := []int{56, 56, 56, 56}                        // 5) CoeffsToSlots
 
 	LogQ := append(q0, qiSlotsToCoeffs...)
 	LogQ = append(LogQ, qiCircuitSlots...)
+	max_lv := len(LogQ) - 1
 	LogQ = append(LogQ, qiEvalMod...)
 	LogQ = append(LogQ, qiCoeffsToSlots...)
 
@@ -205,13 +207,16 @@ func main() {
 
 	// Generate a random plaintext with values uniformly distributed in [-1, 1] for the real and imaginary part.
 	valuesWant := make([]complex128, params.MaxSlots())
+	debug_values := make([]int, params.MaxSlots())
 	for i := range valuesWant {
-		valuesWant[i] = complex(sampling.RandFloat64(-1.0, 1.0), 0.0)
-		// TODO : 복소 단위근 매핑으로 바꿔서 encoding
+		x := sampling.RandInt(big.NewInt(256))
+		debug_values[i] = int(x.Int64())
+		// exp(2pi*i * x / 256) = cos(2pi * x / 256) + i * sin(2pi* x / 256)
+		valuesWant[i] = complex(math.Cos(2*math.Pi*(float64(x.Int64())/256.0)), math.Sin(2*math.Pi*(float64(x.Int64())/256.0)))
 	}
 
 	// We encrypt at level 0
-	plaintext := ckks.NewPlaintext(params, params.MaxLevel())
+	plaintext := ckks.NewPlaintext(params, max_lv)
 	if err := encoder.Encode(valuesWant, plaintext); err != nil {
 		panic(err)
 	}
@@ -222,35 +227,79 @@ func main() {
 		panic(err)
 	}
 
+	valuesWant2 := make([]complex128, params.MaxSlots())
+	debug_values2 := make([]int, params.MaxSlots())
+	for i := range valuesWant {
+		x := sampling.RandInt(big.NewInt(256))
+		debug_values2[i] = int(x.Int64())
+		// exp(2pi*i * x / 256) = cos(2pi * x / 256) + i * sin(2pi* x / 256)
+		valuesWant2[i] = complex(math.Cos(2*math.Pi*(float64(x.Int64())/256.0)), math.Sin(2*math.Pi*(float64(x.Int64())/256.0)))
+	}
+
+	// We encrypt at level 0
+	plaintext2 := ckks.NewPlaintext(params, max_lv)
+	if err := encoder.Encode(valuesWant2, plaintext2); err != nil {
+		panic(err)
+	}
+
+	// Encrypt
+	ciphertext2, err := encryptor.EncryptNew(plaintext2)
+	if err != nil {
+		panic(err)
+	}
+
 	// Decrypt, print and compare with the plaintext values
 	fmt.Println()
 	fmt.Println("Precision of values vs. ciphertext")
 	valuesTest := printDebug(params, ciphertext, valuesWant, decryptor, encoder)
-
-	// compute target values for x^3+1
-	for i := range valuesWant {
-		valuesTest[i] = valuesWant[i]*valuesWant[i]*valuesWant[i] + 1.0
-	}
 
 	// polynomial evaluation
 
 	// Target : f(x) = x^3 + 1
 	// 계수를 먼저 bignum.Polynomial에 초기화 해줘야함.
 	// 여기서는 degree, depth 같은 메타정보와, chebyshev basis로 변환해주는 역할을 함.
+
+	// x == 3 ==> 1
+	// x != 3 ==> 0
+	eq := func(x int) int {
+		if x == 0 {
+			return 1
+		} else {
+			return 0
+		}
+	}
+
+	err = eval.Conjugate(ciphertext2, ciphertext2)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	var result *rlwe.Ciphertext
+	result, _ = eval.MulRelinNew(ciphertext, ciphertext2)
+	eval.Rescale(result, result)
+
 	var f_coeffs bignum.Polynomial
-	f_coeffs = bignum.NewPolynomial(0, []complex128{1.0, 0.0, 0.0, 1.0}, nil)
+	f_coeffs = bignum.NewPolynomial(0, HermiteInterpolation(256, 1, eq), nil)
 
 	// 그 다음에는, 이걸 polnomial 객체로 wrapping 시켜서, 계수정보를 plaintext로 encoding하는 작업을 함으로써
 	// 원 버튼 딸깍용으로 만들어주는 역할.
 	var poly_f polynomial.Polynomial
 	poly_f = polynomial.NewPolynomial(f_coeffs)
 
-	ciphertext, err = poly_eval.Evaluate(ciphertext, poly_f, params.DefaultScale())
+	result, err = poly_eval.Evaluate(result, poly_f, params.DefaultScale())
 	if err != nil {
 		panic(err)
 	}
 
 	fmt.Println("Done")
+
+	for i := 0; i < len(debug_values); i++ {
+		if debug_values[i] == debug_values2[i] {
+			valuesTest[i] = 1
+		} else {
+			valuesTest[i] = 0
+		}
+	}
 
 	//==================
 	//=== 5) DECRYPT ===
@@ -261,7 +310,7 @@ func main() {
 	// Decrypt, print and compare with the plaintext values
 	fmt.Println()
 	fmt.Println("Precision of ciphertext vs. Bootstrap(ciphertext)")
-	printDebug(params, ciphertext, valuesTest, decryptor, encoder)
+	printDebug(params, result, valuesTest, decryptor, encoder)
 }
 
 func printDebug(params ckks.Parameters, ciphertext *rlwe.Ciphertext, valuesWant []complex128, decryptor *rlwe.Decryptor, encoder *ckks.Encoder) (valuesTest []complex128) {
