@@ -45,11 +45,20 @@ import (
 	"github.com/tuneinsight/lattigo/v6/core/rlwe"
 	"github.com/tuneinsight/lattigo/v6/ring"
 	"github.com/tuneinsight/lattigo/v6/schemes/ckks"
-	"github.com/tuneinsight/lattigo/v6/utils/bignum"
 	"github.com/tuneinsight/lattigo/v6/utils/sampling"
 )
 
 var flagShort = flag.Bool("short", false, "run the example with a smaller and insecure ring degree.")
+
+type Context struct {
+	params    *ckks.Parameters
+	encoder   *ckks.Encoder
+	encryptor *rlwe.Encryptor
+	decryptor *rlwe.Decryptor
+	eval      *ckks.Evaluator
+	btp       *bootstrapping.Evaluator
+	poly_eval *polynomial.Evaluator
+}
 
 func main() {
 
@@ -201,9 +210,22 @@ func main() {
 	// 시간나면 member 함수 목록들을 보면서 모르는것들을 공부해나가면 좋음.
 	eval := ckks.NewEvaluator(params, evk)
 
-	// polynomial evaluation은 polynomial evaluator로 진행함.
-	// 미리 계산된 계수만 있으면, 최적의 방법으로 다항식을 계산해줌.
+	var btp *bootstrapping.Evaluator
+
+	if btp, err = bootstrapping.NewEvaluator(btpParams, evk); err != nil {
+		panic(err)
+	}
+
 	poly_eval := polynomial.NewEvaluator(params, eval)
+
+	var cc Context
+	cc.params = &params
+	cc.encoder = encoder
+	cc.encryptor = encryptor
+	cc.decryptor = decryptor
+	cc.eval = eval
+	cc.btp = btp
+	cc.poly_eval = poly_eval
 
 	// Generate a random plaintext with values uniformly distributed in [-1, 1] for the real and imaginary part.
 	valuesWant := make([]complex128, params.MaxSlots())
@@ -250,46 +272,12 @@ func main() {
 
 	// Decrypt, print and compare with the plaintext values
 	fmt.Println()
-	fmt.Println("Precision of values vs. ciphertext")
-	valuesTest := printDebug(params, ciphertext, valuesWant, decryptor, encoder)
+	//fmt.Println("Precision of values vs. ciphertext")
+	//valuesTest := printDebug(params, ciphertext, valuesWant, decryptor, encoder)
+	valuesTest := make([]complex128, params.MaxSlots())
 
-	// polynomial evaluation
-
-	// Target : f(x) = x^3 + 1
-	// 계수를 먼저 bignum.Polynomial에 초기화 해줘야함.
-	// 여기서는 degree, depth 같은 메타정보와, chebyshev basis로 변환해주는 역할을 함.
-
-	// x == 3 ==> 1
-	// x != 3 ==> 0
-	eq := func(x int) int {
-		if x == 0 {
-			return 1
-		} else {
-			return 0
-		}
-	}
-
-	err = eval.Conjugate(ciphertext2, ciphertext2)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	var result *rlwe.Ciphertext
-	result, _ = eval.MulRelinNew(ciphertext, ciphertext2)
-	eval.Rescale(result, result)
-
-	var f_coeffs bignum.Polynomial
-	f_coeffs = bignum.NewPolynomial(0, HermiteInterpolation(256, 1, eq), nil)
-
-	// 그 다음에는, 이걸 polnomial 객체로 wrapping 시켜서, 계수정보를 plaintext로 encoding하는 작업을 함으로써
-	// 원 버튼 딸깍용으로 만들어주는 역할.
-	var poly_f polynomial.Polynomial
-	poly_f = polynomial.NewPolynomial(f_coeffs)
-
-	result, err = poly_eval.Evaluate(result, poly_f, params.DefaultScale())
-	if err != nil {
-		panic(err)
-	}
+	// equality test
+	ciphertext = EvalEquality(ciphertext, ciphertext2, cc)
 
 	fmt.Println("Done")
 
@@ -310,7 +298,15 @@ func main() {
 	// Decrypt, print and compare with the plaintext values
 	fmt.Println()
 	fmt.Println("Precision of ciphertext vs. Bootstrap(ciphertext)")
-	printDebug(params, result, valuesTest, decryptor, encoder)
+	valuesEQtest := printDebug(params, ciphertext, valuesTest, decryptor, encoder)
+
+	eq_acc := 0.0
+	for i := 0; i < len(valuesEQtest); i++ {
+		if math.Round(real(valuesEQtest[i])) == math.Round(real(valuesTest[i])) {
+			eq_acc += 1.0
+		}
+	}
+	fmt.Println("equality accuracy : ", eq_acc/float64(len(valuesEQtest)))
 }
 
 func printDebug(params ckks.Parameters, ciphertext *rlwe.Ciphertext, valuesWant []complex128, decryptor *rlwe.Decryptor, encoder *ckks.Encoder) (valuesTest []complex128) {
