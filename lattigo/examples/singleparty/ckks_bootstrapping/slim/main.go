@@ -36,7 +36,6 @@ import (
 	"flag"
 	"fmt"
 	"math"
-	"math/big"
 
 	"github.com/tuneinsight/lattigo/v6/circuits/ckks/bootstrapping"
 	"github.com/tuneinsight/lattigo/v6/circuits/ckks/dft"
@@ -45,7 +44,6 @@ import (
 	"github.com/tuneinsight/lattigo/v6/core/rlwe"
 	"github.com/tuneinsight/lattigo/v6/ring"
 	"github.com/tuneinsight/lattigo/v6/schemes/ckks"
-	"github.com/tuneinsight/lattigo/v6/utils/sampling"
 )
 
 var flagShort = flag.Bool("short", false, "run the example with a smaller and insecure ring degree.")
@@ -58,6 +56,7 @@ type Context struct {
 	eval      *ckks.Evaluator
 	btp       *bootstrapping.Evaluator
 	poly_eval *polynomial.Evaluator
+	max_lv    int
 }
 
 func main() {
@@ -226,7 +225,60 @@ func main() {
 	cc.eval = eval
 	cc.btp = btp
 	cc.poly_eval = poly_eval
+	cc.max_lv = max_lv
 
+	m := 8
+
+	a := make([]int, m)
+	b := make([]int, m)
+
+	for i := 0; i < m; i++ {
+		x := i
+		y := i
+
+		a[i] = int(x)
+		b[i] = int(y)
+	}
+
+	fmt.Println("a =", a)
+	fmt.Println("b =", b)
+
+	dt, err := PrecompDeltas(a, b, cc)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("m =", dt.M)
+	fmt.Println("pair count =", dt.PairCount)
+	fmt.Println("num blocks =", len(dt.DeltaBlocks))
+
+	for blk, ct := range dt.DeltaBlocks {
+		fmt.Printf("\n=== Delta block %d ===\n", blk)
+
+		slots := ct.Slots()
+		if !ct.IsBatched {
+			slots *= 2
+		}
+
+		values := make([]complex128, slots)
+		if err := encoder.Decode(decryptor.DecryptNew(ct), values); err != nil {
+			panic(err)
+		}
+
+		for s := 0; s < slots; s++ {
+			if !dt.Valid[blk][s] {
+				continue
+			}
+			fmt.Printf("slot=%d k=%d pos=%d eq≈%.4f\n",
+				s,
+				dt.KOfSlot[blk][s],
+				dt.PosInDiag[blk][s],
+				real(values[s]),
+			)
+		}
+	}
+
+	/*
 	// Generate a random plaintext with values uniformly distributed in [-1, 1] for the real and imaginary part.
 	valuesWant := make([]complex128, params.MaxSlots())
 	debug_values := make([]int, params.MaxSlots())
@@ -306,7 +358,7 @@ func main() {
 			eq_acc += 1.0
 		}
 	}
-	fmt.Println("equality accuracy : ", eq_acc/float64(len(valuesEQtest)))
+	fmt.Println("equality accuracy : ", eq_acc/float64(len(valuesEQtest)))*/
 }
 
 func printDebug(params ckks.Parameters, ciphertext *rlwe.Ciphertext, valuesWant []complex128, decryptor *rlwe.Decryptor, encoder *ckks.Encoder) (valuesTest []complex128) {

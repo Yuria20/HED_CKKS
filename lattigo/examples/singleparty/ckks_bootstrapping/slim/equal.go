@@ -1,8 +1,7 @@
 package main
 
 import (
-	"fmt"
-
+	
 	"github.com/tuneinsight/lattigo/v6/circuits/ckks/polynomial"
 	"github.com/tuneinsight/lattigo/v6/core/rlwe"
 	"github.com/tuneinsight/lattigo/v6/utils/bignum"
@@ -30,15 +29,25 @@ func EvalEquality(ciphertext1 *rlwe.Ciphertext, ciphertext2 *rlwe.Ciphertext, cc
 	var err error
 	var result *rlwe.Ciphertext
 
+	// ciphertext2 복사본
+	ct2Conj := ciphertext2.CopyNew()
+
 	// conjugate : exp(y) ==> exp(-y)
-	err = eval.Conjugate(ciphertext2, ciphertext2)
+	err = eval.Conjugate(ct2Conj, ct2Conj)
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 
 	// mult : exp(x) * exp(-y) ==> exp(x-y)
-	result, _ = eval.MulRelinNew(ciphertext1, ciphertext2)
-	eval.Rescale(result, result)
+	result, err = eval.MulRelinNew(ciphertext1, ct2Conj)
+	if err != nil {
+		panic(err)
+	}
+
+	err = eval.Rescale(result, result)
+	if err != nil {
+		panic(err)
+	}
 
 	var f_coeffs bignum.Polynomial
 
