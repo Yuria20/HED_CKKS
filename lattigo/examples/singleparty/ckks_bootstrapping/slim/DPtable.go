@@ -20,6 +20,13 @@ type DeltaTable struct {
 	PairCount   int //전체 비교쌍 개수 = m*m
 }
 
+type PairIndex struct {
+	IA  int // a의 index (0-based)
+	JB  int // b의 index (0-based)
+	K   int // anti-diagonal index (1-based 좌표계 기준 k=i+j)
+	Pos int // diagonal 내부 위치
+}
+
 //복소원 매핑
 func ByteToRoot(x int) complex128 {
 	return complex(
@@ -35,55 +42,48 @@ func DiagLen(k, m int) int {
 	return 2*m - k + 1
 }
 
-// 전개:
+// 전개 순서:
 // A: a1 | a1,a2 | a1,a2,a3 | ... | a_{m-1},a_m | a_m
 // B: b1 | b2,b1 | b3,b2,b1 | ... | b_m,b_{m-1} | b_m
-func buildPaperStyleFlattened(a, b []int) (
-	flatA []complex128,
-	flatB []complex128,
-	kList []int,
-	posList []int,
+func buildIndexes(m int) (
+	pairs []PairIndex,
 	err error,
 ) {
-	if len(a) != len(b) {
-		return nil, nil, nil, nil, fmt.Errorf("a and b must have same length")
-	}
-	m := len(a)
 	if m == 0 {
-		return nil, nil, nil, nil, fmt.Errorf("empty input")
+		return nil, fmt.Errorf("empty input")
 	}
 
 	// 위쪽 삼각형: k = 2 .. m+1
 	for k := 2; k <= m+1; k++ {
 		diagLen := k - 1
 		for t := 0; t < diagLen; t++ {
-			// A: a1, a2, ..., a_{diagLen}
 			i := t + 1
-			// B: b_{diagLen}, b_{diagLen-1}, ..., b1
 			j := diagLen - t
 
-			flatA = append(flatA, ByteToRoot(a[i-1]))
-			flatB = append(flatB, ByteToRoot(b[j-1]))
-			kList = append(kList, k)
-			posList = append(posList, t)
+			pairs = append(pairs, PairIndex{
+				IA:  i - 1,
+				JB:  j - 1,
+				K:   k,
+				Pos: t,
+			})
 		}
 	}
 
 	// 아래쪽 삼각형: k = m+2 .. 2m
 	for k := m + 2; k <= 2*m; k++ {
 		diagLen := 2*m - k + 1
-		start := m - diagLen + 1 // A 시작 인덱스(1-based)
+		start := m - diagLen + 1
 
 		for t := 0; t < diagLen; t++ {
-			// A: a_start, a_{start+1}, ..., a_m
 			i := start + t
-			// B: b_m, b_{m-1}, ..., b_start
 			j := m - t
 
-			flatA = append(flatA, ByteToRoot(a[i-1]))
-			flatB = append(flatB, ByteToRoot(b[j-1]))
-			kList = append(kList, k)
-			posList = append(posList, t)
+			pairs = append(pairs, PairIndex{
+				IA:  i - 1,
+				JB:  j - 1,
+				K:   k,
+				Pos: t,
+			})
 		}
 	}
 
@@ -91,47 +91,45 @@ func buildPaperStyleFlattened(a, b []int) (
 }
 
 func packBlocks(
-	flatA, flatB []complex128,
-	kList, posList []int,
+	pairs []PairIndex,
 	slots int,
 ) (
-	aBlocks [][]complex128,
-	bBlocks [][]complex128,
+	blocks [][]PairIndex,
 	kOfSlot [][]int,
 	posInDiag [][]int,
 	valid [][]bool,
 	err error,
 ) {
-	if len(flatA) != len(flatB) || len(flatA) != len(kList) || len(flatA) != len(posList) {
-		return nil, nil, nil, nil, nil, fmt.Errorf("inconsistent lengths")
+	if slots <= 0 {
+		return nil, nil, nil, nil, fmt.Errorf("invalid slots: %d", slots)
 	}
 
-	n := len(flatA)
+	n := len(pairs)
 	for start := 0; start < n; start += slots {
 		end := start + slots
 		if end > n {
 			end = n
 		}
 
-		curA := append([]complex128{}, flatA[start:end]...)
-		curB := append([]complex128{}, flatB[start:end]...)
-		curK := append([]int{}, kList[start:end]...)
-		curPos := append([]int{}, posList[start:end]...)
-		curValid := make([]bool, end-start)
-		for i := range curValid {
-			curValid[i] = true
+		curPairs := append([]PairIndex{}, pairs[start:end]...)
+		curK := make([]int, 0, slots)
+		curPos := make([]int, 0, slots)
+		curValid := make([]bool, 0, slots)
+
+		for _, p := range curPairs {
+			curK = append(curK, p.K)
+			curPos = append(curPos, p.Pos)
+			curValid = append(curValid, true)
 		}
 
-		for len(curA) < slots {
-			curA = append(curA, complex(1, 0))
-			curB = append(curB, complex(1, 0))
+		for len(curPairs) < slots {
+			curPairs = append(curPairs, PairIndex{IA: -1, JB: -1, K: 0, Pos: -1})
 			curK = append(curK, 0)
 			curPos = append(curPos, -1)
 			curValid = append(curValid, false)
 		}
 
-		aBlocks = append(aBlocks, curA)
-		bBlocks = append(bBlocks, curB)
+		blocks = append(blocks, curPairs)
 		kOfSlot = append(kOfSlot, curK)
 		posInDiag = append(posInDiag, curPos)
 		valid = append(valid, curValid)
@@ -140,12 +138,127 @@ func packBlocks(
 	return
 }
 
+// [a0, a1, ..., a_{m-1}] 암호화
+func encryptString(values []int, cc Context) (*rlwe.Ciphertext, error) {
+	slots := cc.params.MaxSlots()
+	buf := make([]complex128, slots)
+
+	for i := 0; i < len(values); i++ {
+		buf[i] = ByteToRoot(values[i])
+	}
+
+	pt := ckks.NewPlaintext(*cc.params, cc.params.MaxLevel())
+	if err := cc.encoder.Encode(buf, pt); err != nil {
+		return nil, err
+	}
+	return cc.encryptor.EncryptNew(pt)
+}
+
 func encryptPacked(values []complex128, cc Context) (*rlwe.Ciphertext, error) {
-	pt := ckks.NewPlaintext(*cc.params, cc.max_lv)
+	pt := ckks.NewPlaintext(*cc.params, cc.params.MaxLevel())
 	if err := cc.encoder.Encode(values, pt); err != nil {
 		return nil, err
 	}
 	return cc.encryptor.EncryptNew(pt)
+}
+
+func makeMask(slot, slots, level int, cc Context) (*rlwe.Plaintext, error) {
+	if slot < 0 || slot >= slots {
+		return nil, fmt.Errorf("invalid mask slot=%d for slots=%d", slot, slots)
+	}
+
+	mask := make([]complex128, cc.params.MaxSlots())
+	mask[slot] = 1
+
+	pt := ckks.NewPlaintext(*cc.params, level)
+	if err := cc.encoder.Encode(mask, pt); err != nil {
+		return nil, err
+	}
+	return pt, nil
+}
+
+func encryptZero(cc Context) (*rlwe.Ciphertext, error) {
+	zeros := make([]complex128, cc.params.MaxSlots())
+	return encryptPacked(zeros, cc)
+}
+
+
+// 원본 문자열 암호문에서 필요한 index만 뽑아 현재 block slot 배치로 재구성
+// srcIndices[dst] = 원본 문자열에서 dst slot으로 가져올 index
+func BlockFromEncrypted(
+	ctOrig *rlwe.Ciphertext,
+	srcIndices []int,
+	slots int,
+	cc Context,
+) (*rlwe.Ciphertext, error) {
+
+	var acc *rlwe.Ciphertext
+
+	for dst, src := range srcIndices {
+		if src < 0 {
+			continue
+		}
+
+		rot := src - dst
+		ctRot, err := cc.eval.RotateNew(ctOrig, rot)
+		if err != nil {
+			return nil, fmt.Errorf("rotate dst=%d src=%d: %w", dst, src, err)
+		}
+
+		maskPt, err := makeMask(dst, slots, ctRot.Level(), cc)
+		if err != nil {
+			return nil, fmt.Errorf("make mask dst=%d src=%d: %w", dst, src, err)
+		}
+
+		ctMasked, err := cc.eval.MulNew(ctRot, maskPt)
+		if err != nil {
+			return nil, fmt.Errorf("mul mask dst=%d src=%d: %w", dst, src, err)
+		}
+
+		if err := cc.eval.Rescale(ctMasked, ctMasked); err != nil {
+			return nil, fmt.Errorf("rescale dst=%d src=%d: %w", dst, src, err)
+		}
+
+		if acc == nil {
+			acc = ctMasked
+		} else {
+			if err := cc.eval.Add(acc, ctMasked, acc); err != nil {
+				return nil, fmt.Errorf("add dst=%d src=%d: %w", dst, src, err)
+			}
+		}
+	}
+
+	if acc == nil {
+		return encryptZero(cc)
+	}
+
+	return acc, nil
+}
+
+func ABlock(
+	ctAOrig *rlwe.Ciphertext,
+	block []PairIndex,
+	slots int,
+	cc Context,
+) (*rlwe.Ciphertext, error) {
+	src := make([]int, len(block))
+	for i, p := range block {
+		src[i] = p.IA
+	}
+	return BlockFromEncrypted(ctAOrig, src, slots, cc)
+}
+
+func BBlock(
+	ctBOrig *rlwe.Ciphertext,
+	block []PairIndex,
+	slots int,
+	cc Context,
+) (*rlwe.Ciphertext, error) {
+	src := make([]int, len(block))
+	for i, p := range block {
+		src[i] = p.JB
+	}
+	return BlockFromEncrypted(ctBOrig, src, slots, cc)
 }
 
 func PrecompDeltas(a, b []int, cc Context) (*DeltaTable, error) {
@@ -154,31 +267,73 @@ func PrecompDeltas(a, b []int, cc Context) (*DeltaTable, error) {
 	}
 
 	m := len(a)
-	slots := cc.params.MaxSlots()
+	slots := m * m
+	if slots > cc.params.MaxSlots() {
+		slots = cc.params.MaxSlots()
+	}
 
-	flatA, flatB, kList, posList, err := buildPaperStyleFlattened(a, b)
+	pairs, err := buildIndexes(m)
 	if err != nil {
 		return nil, err
 	}
 
-	aBlocks, bBlocks, kOfSlot, posInDiag, valid, err :=
-		packBlocks(flatA, flatB, kList, posList, slots)
+	blocks, kOfSlot, posInDiag, valid, err := packBlocks(pairs, slots)
 	if err != nil {
 		return nil, err
 	}
 
-	deltaBlocks := make([]*rlwe.Ciphertext, len(aBlocks))
-	for blk := range aBlocks {
-		ctA, err := encryptPacked(aBlocks[blk], cc)
+	ctAOrig, err := encryptString(a, cc)
+	if err != nil {
+		return nil, fmt.Errorf("encrypt a: %w", err)
+	}
+
+	ctBOrig, err := encryptString(b, cc)
+	if err != nil {
+		return nil, fmt.Errorf("encrypt b: %w", err)
+	}
+
+	deltaBlocks := make([]*rlwe.Ciphertext, len(blocks))
+	for blk := range blocks {
+		ctAblk, err := ABlock(ctAOrig, blocks[blk], slots, cc)
 		if err != nil {
-			return nil, fmt.Errorf("encrypt ctA block %d: %w", blk, err)
-		}
-		ctB, err := encryptPacked(bBlocks[blk], cc)
-		if err != nil {
-			return nil, fmt.Errorf("encrypt ctB block %d: %w", blk, err)
+			return nil, fmt.Errorf("A block %d: %w", blk, err)
 		}
 
-		ctEq := EvalEquality(ctA, ctB, cc)
+		ctBblk, err := BBlock(ctBOrig, blocks[blk], slots, cc)
+		if err != nil {
+			return nil, fmt.Errorf("B block %d: %w", blk, err)
+		}
+
+		// ===== debug: block 0의 gather 결과 확인 =====
+		if blk == 0 {
+			aVals := make([]complex128, cc.params.MaxSlots())
+			bVals := make([]complex128, cc.params.MaxSlots())
+
+			if err := cc.encoder.Decode(cc.decryptor.DecryptNew(ctAblk), aVals); err != nil {
+				return nil, fmt.Errorf("decode A block %d: %w", blk, err)
+			}
+			if err := cc.encoder.Decode(cc.decryptor.DecryptNew(ctBblk), bVals); err != nil {
+				return nil, fmt.Errorf("decode B block %d: %w", blk, err)
+			}
+
+			fmt.Println("=== gathered block 0 before EvalEquality ===")
+			for s := 0; s < slots; s++ {
+				if !valid[blk][s] {
+					continue
+				}
+				fmt.Printf("slot=%d k=%d pos=%d A=%0.4f%+0.4fi B=%0.4f%+0.4fi\n",
+					s,
+					kOfSlot[blk][s],
+					posInDiag[blk][s],
+					real(aVals[s]), imag(aVals[s]),
+					real(bVals[s]), imag(bVals[s]),
+				)
+			}
+		}
+		// ===== debug 끝 =====
+
+
+		ctEq := EvalEquality(ctBblk, ctBblk, cc)
 		deltaBlocks[blk] = ctEq
 	}
 

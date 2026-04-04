@@ -90,7 +90,7 @@ func main() {
 	qiSlotsToCoeffs := []int{39, 39, 39} // 1) SlotsToCoeffs
 
 	// len(qiCircuitsSlots) = available depth
-	qiCircuitSlots := []int{45, 45, 45, 45, 45, 45, 45, 45, 45, 45} // 0) Circuit in the slot domain
+	qiCircuitSlots := []int{45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45} // 0) Circuit in the slot domain
 	qiEvalMod := []int{60, 60, 60, 60, 60, 60, 60, 60}              // 6) EvalMod
 	qiCoeffsToSlots := []int{56, 56, 56, 56}                        // 5) CoeffsToSlots
 
@@ -191,12 +191,33 @@ func main() {
 	decryptor := rlwe.NewDecryptor(params, sk)
 	encryptor := rlwe.NewEncryptor(params, pk)
 
+	m := 8
+
 	fmt.Println()
 	fmt.Println("Generating bootstrapping evaluation keys...")
 	evk, _, err := btpParams.GenEvaluationKeys(sk)
 	if err != nil {
 		panic(err)
 	}
+
+	//BlockFromEncrypted에서 쓸 추가 rotation
+	gatherSlots := m * m
+	if gatherSlots > params.MaxSlots() {
+		gatherSlots = params.MaxSlots()
+	}
+
+	galEls := make([]uint64, 0, 2*(gatherSlots-1))
+	for r := 1; r < gatherSlots; r++ {
+		galEls = append(galEls, params.GaloisElement(r))
+		galEls = append(galEls, params.GaloisElement(-r))
+	}
+
+	gk := kgen.GenGaloisKeysNew(galEls, sk)
+
+	for i, key := range gk {
+		evk.GaloisKeys[galEls[i]] = key
+	}
+
 	fmt.Println("Done")
 
 	//========================
@@ -227,7 +248,6 @@ func main() {
 	cc.poly_eval = poly_eval
 	cc.max_lv = max_lv
 
-	m := 8
 
 	a := make([]int, m)
 	b := make([]int, m)
@@ -245,6 +265,7 @@ func main() {
 
 	dt, err := PrecompDeltas(a, b, cc)
 	if err != nil {
+		fmt.Printf("PrecompDeltas error: %+v\n", err)
 		panic(err)
 	}
 

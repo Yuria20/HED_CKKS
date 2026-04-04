@@ -1,7 +1,9 @@
 package main
 
 import (
-	
+	"fmt"
+	"math"
+
 	"github.com/tuneinsight/lattigo/v6/circuits/ckks/polynomial"
 	"github.com/tuneinsight/lattigo/v6/core/rlwe"
 	"github.com/tuneinsight/lattigo/v6/utils/bignum"
@@ -38,6 +40,11 @@ func EvalEquality(ciphertext1 *rlwe.Ciphertext, ciphertext2 *rlwe.Ciphertext, cc
 		panic(err)
 	}
 
+	fmt.Printf("before mul: ct1 level=%d scale=2^%.2f | ct2 level=%d scale=2^%.2f\n",
+		ciphertext1.Level(), math.Log2(ciphertext1.Scale.Float64()),
+		ct2Conj.Level(), math.Log2(ct2Conj.Scale.Float64()),
+	)
+
 	// mult : exp(x) * exp(-y) ==> exp(x-y)
 	result, err = eval.MulRelinNew(ciphertext1, ct2Conj)
 	if err != nil {
@@ -49,14 +56,33 @@ func EvalEquality(ciphertext1 *rlwe.Ciphertext, ciphertext2 *rlwe.Ciphertext, cc
 		panic(err)
 	}
 
+	fmt.Printf("after rescale: result level=%d scale=2^%.2f logQ=%d\n",
+		result.Level(),
+		math.Log2(result.Scale.Float64()),
+		params.LogQLvl(result.Level()),
+	)
+
 	var f_coeffs bignum.Polynomial
 
 	// hermite order : 1
 	f_coeffs = bignum.NewPolynomial(0, HermiteInterpolation(256, 1, eq), nil)
+
 	var poly_f polynomial.Polynomial
 	poly_f = polynomial.NewPolynomial(f_coeffs)
 
-	// eval poly : exp(x-y) ==> eq(x-y)
+	// 여기서 bootstrap
+	result, err = cc.btp.Bootstrap(result)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("after bootstrap: result level=%d scale=2^%.2f logQ=%d\n",
+		result.Level(),
+		math.Log2(result.Scale.Float64()),
+		params.LogQLvl(result.Level()),
+	)
+
+	// 그 다음 polynomial evaluation
 	result, err = poly_eval.Evaluate(result, poly_f, params.DefaultScale())
 	if err != nil {
 		panic(err)
