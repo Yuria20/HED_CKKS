@@ -91,8 +91,8 @@ func main() {
 
 	// len(qiCircuitsSlots) = available depth
 	qiCircuitSlots := []int{45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45} // 0) Circuit in the slot domain
-	qiEvalMod := []int{60, 60, 60, 60, 60, 60, 60, 60}              // 6) EvalMod
-	qiCoeffsToSlots := []int{56, 56, 56, 56}                        // 5) CoeffsToSlots
+	qiEvalMod := []int{60, 60, 60, 60, 60, 60, 60, 60}                                              // 6) EvalMod
+	qiCoeffsToSlots := []int{56, 56, 56, 56}                                                        // 5) CoeffsToSlots
 
 	LogQ := append(q0, qiSlotsToCoeffs...)
 	LogQ = append(LogQ, qiCircuitSlots...)
@@ -208,6 +208,7 @@ func main() {
 
 	galEls := make([]uint64, 0, 2*(gatherSlots-1))
 	for r := 1; r < gatherSlots; r++ {
+		fmt.Println(r)
 		galEls = append(galEls, params.GaloisElement(r))
 		galEls = append(galEls, params.GaloisElement(-r))
 	}
@@ -247,7 +248,6 @@ func main() {
 	cc.btp = btp
 	cc.poly_eval = poly_eval
 	cc.max_lv = max_lv
-
 
 	a := make([]int, m)
 	b := make([]int, m)
@@ -300,86 +300,86 @@ func main() {
 	}
 
 	/*
-	// Generate a random plaintext with values uniformly distributed in [-1, 1] for the real and imaginary part.
-	valuesWant := make([]complex128, params.MaxSlots())
-	debug_values := make([]int, params.MaxSlots())
-	for i := range valuesWant {
-		x := sampling.RandInt(big.NewInt(256))
-		debug_values[i] = int(x.Int64())
-		// exp(2pi*i * x / 256) = cos(2pi * x / 256) + i * sin(2pi* x / 256)
-		valuesWant[i] = complex(math.Cos(2*math.Pi*(float64(x.Int64())/256.0)), math.Sin(2*math.Pi*(float64(x.Int64())/256.0)))
-	}
-
-	// We encrypt at level 0
-	plaintext := ckks.NewPlaintext(params, max_lv)
-	if err := encoder.Encode(valuesWant, plaintext); err != nil {
-		panic(err)
-	}
-
-	// Encrypt
-	ciphertext, err := encryptor.EncryptNew(plaintext)
-	if err != nil {
-		panic(err)
-	}
-
-	valuesWant2 := make([]complex128, params.MaxSlots())
-	debug_values2 := make([]int, params.MaxSlots())
-	for i := range valuesWant {
-		x := sampling.RandInt(big.NewInt(256))
-		debug_values2[i] = int(x.Int64())
-		// exp(2pi*i * x / 256) = cos(2pi * x / 256) + i * sin(2pi* x / 256)
-		valuesWant2[i] = complex(math.Cos(2*math.Pi*(float64(x.Int64())/256.0)), math.Sin(2*math.Pi*(float64(x.Int64())/256.0)))
-	}
-
-	// We encrypt at level 0
-	plaintext2 := ckks.NewPlaintext(params, max_lv)
-	if err := encoder.Encode(valuesWant2, plaintext2); err != nil {
-		panic(err)
-	}
-
-	// Encrypt
-	ciphertext2, err := encryptor.EncryptNew(plaintext2)
-	if err != nil {
-		panic(err)
-	}
-
-	// Decrypt, print and compare with the plaintext values
-	fmt.Println()
-	//fmt.Println("Precision of values vs. ciphertext")
-	//valuesTest := printDebug(params, ciphertext, valuesWant, decryptor, encoder)
-	valuesTest := make([]complex128, params.MaxSlots())
-
-	// equality test
-	ciphertext = EvalEquality(ciphertext, ciphertext2, cc)
-
-	fmt.Println("Done")
-
-	for i := 0; i < len(debug_values); i++ {
-		if debug_values[i] == debug_values2[i] {
-			valuesTest[i] = 1
-		} else {
-			valuesTest[i] = 0
+		// Generate a random plaintext with values uniformly distributed in [-1, 1] for the real and imaginary part.
+		valuesWant := make([]complex128, params.MaxSlots())
+		debug_values := make([]int, params.MaxSlots())
+		for i := range valuesWant {
+			x := sampling.RandInt(big.NewInt(256))
+			debug_values[i] = int(x.Int64())
+			// exp(2pi*i * x / 256) = cos(2pi * x / 256) + i * sin(2pi* x / 256)
+			valuesWant[i] = complex(math.Cos(2*math.Pi*(float64(x.Int64())/256.0)), math.Sin(2*math.Pi*(float64(x.Int64())/256.0)))
 		}
-	}
 
-	//==================
-	//=== 5) DECRYPT ===
-	//==================
-
-	fmt.Println("test")
-
-	// Decrypt, print and compare with the plaintext values
-	fmt.Println()
-	fmt.Println("Precision of ciphertext vs. Bootstrap(ciphertext)")
-	valuesEQtest := printDebug(params, ciphertext, valuesTest, decryptor, encoder)
-
-	eq_acc := 0.0
-	for i := 0; i < len(valuesEQtest); i++ {
-		if math.Round(real(valuesEQtest[i])) == math.Round(real(valuesTest[i])) {
-			eq_acc += 1.0
+		// We encrypt at level 0
+		plaintext := ckks.NewPlaintext(params, max_lv)
+		if err := encoder.Encode(valuesWant, plaintext); err != nil {
+			panic(err)
 		}
-	}
-	fmt.Println("equality accuracy : ", eq_acc/float64(len(valuesEQtest)))*/
+
+		// Encrypt
+		ciphertext, err := encryptor.EncryptNew(plaintext)
+		if err != nil {
+			panic(err)
+		}
+
+		valuesWant2 := make([]complex128, params.MaxSlots())
+		debug_values2 := make([]int, params.MaxSlots())
+		for i := range valuesWant {
+			x := sampling.RandInt(big.NewInt(256))
+			debug_values2[i] = int(x.Int64())
+			// exp(2pi*i * x / 256) = cos(2pi * x / 256) + i * sin(2pi* x / 256)
+			valuesWant2[i] = complex(math.Cos(2*math.Pi*(float64(x.Int64())/256.0)), math.Sin(2*math.Pi*(float64(x.Int64())/256.0)))
+		}
+
+		// We encrypt at level 0
+		plaintext2 := ckks.NewPlaintext(params, max_lv)
+		if err := encoder.Encode(valuesWant2, plaintext2); err != nil {
+			panic(err)
+		}
+
+		// Encrypt
+		ciphertext2, err := encryptor.EncryptNew(plaintext2)
+		if err != nil {
+			panic(err)
+		}
+
+		// Decrypt, print and compare with the plaintext values
+		fmt.Println()
+		//fmt.Println("Precision of values vs. ciphertext")
+		//valuesTest := printDebug(params, ciphertext, valuesWant, decryptor, encoder)
+		valuesTest := make([]complex128, params.MaxSlots())
+
+		// equality test
+		ciphertext = EvalEquality(ciphertext, ciphertext2, cc)
+
+		fmt.Println("Done")
+
+		for i := 0; i < len(debug_values); i++ {
+			if debug_values[i] == debug_values2[i] {
+				valuesTest[i] = 1
+			} else {
+				valuesTest[i] = 0
+			}
+		}
+
+		//==================
+		//=== 5) DECRYPT ===
+		//==================
+
+		fmt.Println("test")
+
+		// Decrypt, print and compare with the plaintext values
+		fmt.Println()
+		fmt.Println("Precision of ciphertext vs. Bootstrap(ciphertext)")
+		valuesEQtest := printDebug(params, ciphertext, valuesTest, decryptor, encoder)
+
+		eq_acc := 0.0
+		for i := 0; i < len(valuesEQtest); i++ {
+			if math.Round(real(valuesEQtest[i])) == math.Round(real(valuesTest[i])) {
+				eq_acc += 1.0
+			}
+		}
+		fmt.Println("equality accuracy : ", eq_acc/float64(len(valuesEQtest)))*/
 }
 
 func printDebug(params ckks.Parameters, ciphertext *rlwe.Ciphertext, valuesWant []complex128, decryptor *rlwe.Decryptor, encoder *ckks.Encoder) (valuesTest []complex128) {

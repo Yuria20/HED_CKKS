@@ -12,12 +12,12 @@ const AlphabetSize = 256
 
 type DeltaTable struct {
 	DeltaBlocks []*rlwe.Ciphertext //eq 결과 ciphertext들
-	KOfSlot     [][]int //각 slot이 어느 anti-diagonal k=i+j 에 속하는지
-	PosInDiag   [][]int //해당 anti-diagonal 안에서 몇 번째 원소인지
-	Valid       [][]bool //padding이 아닌 실제 데이터인지
-	M           int //문자열 길이
-	Slots       int //block 당 slot 수
-	PairCount   int //전체 비교쌍 개수 = m*m
+	KOfSlot     [][]int            //각 slot이 어느 anti-diagonal k=i+j 에 속하는지
+	PosInDiag   [][]int            //해당 anti-diagonal 안에서 몇 번째 원소인지
+	Valid       [][]bool           //padding이 아닌 실제 데이터인지
+	M           int                //문자열 길이
+	Slots       int                //block 당 slot 수
+	PairCount   int                //전체 비교쌍 개수 = m*m
 }
 
 type PairIndex struct {
@@ -27,7 +27,7 @@ type PairIndex struct {
 	Pos int // diagonal 내부 위치
 }
 
-//복소원 매핑
+// 복소원 매핑
 func ByteToRoot(x int) complex128 {
 	return complex(
 		math.Cos(2*math.Pi*(float64(x)/float64(AlphabetSize))),
@@ -147,7 +147,7 @@ func encryptString(values []int, cc Context) (*rlwe.Ciphertext, error) {
 		buf[i] = ByteToRoot(values[i])
 	}
 
-	pt := ckks.NewPlaintext(*cc.params, cc.params.MaxLevel())
+	pt := ckks.NewPlaintext(*cc.params, cc.max_lv)
 	if err := cc.encoder.Encode(buf, pt); err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func encryptString(values []int, cc Context) (*rlwe.Ciphertext, error) {
 }
 
 func encryptPacked(values []complex128, cc Context) (*rlwe.Ciphertext, error) {
-	pt := ckks.NewPlaintext(*cc.params, cc.params.MaxLevel())
+	pt := ckks.NewPlaintext(*cc.params, cc.max_lv)
 	if err := cc.encoder.Encode(values, pt); err != nil {
 		return nil, err
 	}
@@ -181,7 +181,6 @@ func encryptZero(cc Context) (*rlwe.Ciphertext, error) {
 	zeros := make([]complex128, cc.params.MaxSlots())
 	return encryptPacked(zeros, cc)
 }
-
 
 // 원본 문자열 암호문에서 필요한 index만 뽑아 현재 block slot 배치로 재구성
 // srcIndices[dst] = 원본 문자열에서 dst slot으로 가져올 index
@@ -332,7 +331,6 @@ func PrecompDeltas(a, b []int, cc Context) (*DeltaTable, error) {
 		}
 		// ===== debug 끝 =====
 
-
 		ctEq := EvalEquality(ctBblk, ctBblk, cc)
 		deltaBlocks[blk] = ctEq
 	}
@@ -347,5 +345,3 @@ func PrecompDeltas(a, b []int, cc Context) (*DeltaTable, error) {
 		PairCount:   m * m,
 	}, nil
 }
-
-
