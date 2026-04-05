@@ -11,20 +11,13 @@ import (
 const AlphabetSize = 256
 
 type DeltaTable struct {
-	DeltaBlocks []*rlwe.Ciphertext //eq 결과 ciphertext들
-	KOfSlot     [][]int            //각 slot이 어느 anti-diagonal k=i+j 에 속하는지
-	PosInDiag   [][]int            //해당 anti-diagonal 안에서 몇 번째 원소인지
-	Valid       [][]bool           //padding이 아닌 실제 데이터인지
-	M           int                //문자열 길이
-	Slots       int                //block 당 slot 수
-	PairCount   int                //전체 비교쌍 개수 = m*m
-}
-
-type PairIndex struct {
-	IA  int // a의 index (0-based)
-	JB  int // b의 index (0-based)
-	K   int // anti-diagonal index (1-based 좌표계 기준 k=i+j)
-	Pos int // diagonal 내부 위치
+	DeltaBlocks []*rlwe.Ciphertext // anti-diagonal별 eq 결과
+	KOfSlot     [][]int            // 각 block의 slot이 속한 k
+	PosInDiag   [][]int            // 각 block의 slot이 anti-diagonal 내부에서 몇 번째인지
+	Valid       [][]bool           // 유효 slot 여부
+	M           int                // 문자열 길이
+	Slots       int                // 전체 사용 가능 slot 수
+	PairCount   int                // 전체 비교쌍 개수 = N*m*m
 }
 
 // 복소원 매핑
@@ -42,124 +35,17 @@ func DiagLen(k, m int) int {
 	return 2*m - k + 1
 }
 
-// 전개 순서:
-// A: a1 | a1,a2 | a1,a2,a3 | ... | a_{m-1},a_m | a_m
-// B: b1 | b2,b1 | b3,b2,b1 | ... | b_m,b_{m-1} | b_m
-func buildIndexes(m int) (
-	pairs []PairIndex,
-	err error,
-) {
-	if m == 0 {
-		return nil, fmt.Errorf("empty input")
-	}
-
-	// 위쪽 삼각형: k = 2 .. m+1
-	for k := 2; k <= m+1; k++ {
-		diagLen := k - 1
-		for t := 0; t < diagLen; t++ {
-			i := t + 1
-			j := diagLen - t
-
-			pairs = append(pairs, PairIndex{
-				IA:  i - 1,
-				JB:  j - 1,
-				K:   k,
-				Pos: t,
-			})
-		}
-	}
-
-	// 아래쪽 삼각형: k = m+2 .. 2m
-	for k := m + 2; k <= 2*m; k++ {
-		diagLen := 2*m - k + 1
-		start := m - diagLen + 1
-
-		for t := 0; t < diagLen; t++ {
-			i := start + t
-			j := m - t
-
-			pairs = append(pairs, PairIndex{
-				IA:  i - 1,
-				JB:  j - 1,
-				K:   k,
-				Pos: t,
-			})
-		}
-	}
-
-	return
-}
-
-func packBlocks(
-	pairs []PairIndex,
-	slots int,
-) (
-	blocks [][]PairIndex,
-	kOfSlot [][]int,
-	posInDiag [][]int,
-	valid [][]bool,
-	err error,
-) {
-	if slots <= 0 {
-		return nil, nil, nil, nil, fmt.Errorf("invalid slots: %d", slots)
-	}
-
-	n := len(pairs)
-	for start := 0; start < n; start += slots {
-		end := start + slots
-		if end > n {
-			end = n
-		}
-
-		curPairs := append([]PairIndex{}, pairs[start:end]...)
-		curK := make([]int, 0, slots)
-		curPos := make([]int, 0, slots)
-		curValid := make([]bool, 0, slots)
-
-		for _, p := range curPairs {
-			curK = append(curK, p.K)
-			curPos = append(curPos, p.Pos)
-			curValid = append(curValid, true)
-		}
-
-		for len(curPairs) < slots {
-			curPairs = append(curPairs, PairIndex{IA: -1, JB: -1, K: 0, Pos: -1})
-			curK = append(curK, 0)
-			curPos = append(curPos, -1)
-			curValid = append(curValid, false)
-		}
-
-		blocks = append(blocks, curPairs)
-		kOfSlot = append(kOfSlot, curK)
-		posInDiag = append(posInDiag, curPos)
-		valid = append(valid, curValid)
-	}
-
-	return
-}
-
-// [a0, a1, ..., a_{m-1}] 암호화
-func encryptString(values []int, cc Context) (*rlwe.Ciphertext, error) {
-	slots := cc.params.MaxSlots()
-	buf := make([]complex128, slots)
-
-	for i := 0; i < len(values); i++ {
-		buf[i] = ByteToRoot(values[i])
-	}
-
-	pt := ckks.NewPlaintext(*cc.params, cc.max_lv)
-	if err := cc.encoder.Encode(buf, pt); err != nil {
-		return nil, err
-	}
-	return cc.encryptor.EncryptNew(pt)
-}
-
 func encryptPacked(values []complex128, cc Context) (*rlwe.Ciphertext, error) {
 	pt := ckks.NewPlaintext(*cc.params, cc.max_lv)
 	if err := cc.encoder.Encode(values, pt); err != nil {
 		return nil, err
 	}
 	return cc.encryptor.EncryptNew(pt)
+}
+
+func encryptZero(cc Context) (*rlwe.Ciphertext, error) {
+	zeros := make([]complex128, cc.params.MaxSlots())
+	return encryptPacked(zeros, cc)
 }
 
 func makeMask(slot, slots, level int, cc Context) (*rlwe.Plaintext, error) {
@@ -177,162 +63,245 @@ func makeMask(slot, slots, level int, cc Context) (*rlwe.Plaintext, error) {
 	return pt, nil
 }
 
-func encryptZero(cc Context) (*rlwe.Ciphertext, error) {
-	zeros := make([]complex128, cc.params.MaxSlots())
-	return encryptPacked(zeros, cc)
+func chunkSize(m, n, maxSlots int) (int, error) {
+	inputSlots := n * m
+	if inputSlots == 0 {
+		return 0, fmt.Errorf("empty input")
+	}
+
+	chunk := maxSlots / inputSlots
+	if chunk < 1 {
+		return 0, fmt.Errorf("invalid chunk")
+	}
+	return chunk, nil
 }
 
-// 원본 문자열 암호문에서 필요한 index만 뽑아 현재 block slot 배치로 재구성
-// srcIndices[dst] = 원본 문자열에서 dst slot으로 가져올 index
-func BlockFromEncrypted(
-	ctOrig *rlwe.Ciphertext,
-	srcIndices []int,
-	slots int,
-	cc Context,
-) (*rlwe.Ciphertext, error) {
+// query 하나를 N개 block에 복제해서 sparse하게 pack
+func packQSparse(q []int, n int, chunk int, cc Context) (*rlwe.Ciphertext, error) {
+	m := len(q)
+	buf := make([]complex128, cc.params.MaxSlots())
 
-	var acc *rlwe.Ciphertext
-
-	for dst, src := range srcIndices {
-		if src < 0 {
-			continue
-		}
-
-		rot := src - dst
-		ctRot, err := cc.eval.RotateNew(ctOrig, rot)
-		if err != nil {
-			return nil, fmt.Errorf("rotate dst=%d src=%d: %w", dst, src, err)
-		}
-
-		maskPt, err := makeMask(dst, slots, ctRot.Level(), cc)
-		if err != nil {
-			return nil, fmt.Errorf("make mask dst=%d src=%d: %w", dst, src, err)
-		}
-
-		ctMasked, err := cc.eval.MulNew(ctRot, maskPt)
-		if err != nil {
-			return nil, fmt.Errorf("mul mask dst=%d src=%d: %w", dst, src, err)
-		}
-
-		if err := cc.eval.Rescale(ctMasked, ctMasked); err != nil {
-			return nil, fmt.Errorf("rescale dst=%d src=%d: %w", dst, src, err)
-		}
-
-		if acc == nil {
-			acc = ctMasked
-		} else {
-			if err := cc.eval.Add(acc, ctMasked, acc); err != nil {
-				return nil, fmt.Errorf("add dst=%d src=%d: %w", dst, src, err)
+	for blk := 0; blk < n; blk++ {
+		base := blk * m * chunk
+		for i := 0; i < m; i++ {
+			pos := base + i*chunk
+			if pos >= len(buf) {
+				return nil, fmt.Errorf("packQSparse overflow")
 			}
+			buf[pos] = ByteToRoot(q[i])
 		}
 	}
 
-	if acc == nil {
-		return encryptZero(cc)
+	return encryptPacked(buf, cc)
+}
+
+// target N개를 sparse하게 pack
+func packTSparse(ts [][]int, chunk int, cc Context) (*rlwe.Ciphertext, error) {
+	if len(ts) == 0 {
+		return nil, fmt.Errorf("empty targets")
+	}
+
+	m := len(ts[0])
+	buf := make([]complex128, cc.params.MaxSlots())
+
+	for blk := 0; blk < len(ts); blk++ {
+		if len(ts[blk]) != m {
+			return nil, fmt.Errorf("different target length at %d", blk)
+		}
+
+		base := blk * m * chunk
+		for j := 0; j < m; j++ {
+			pos := base + j*chunk
+			if pos >= len(buf) {
+				return nil, fmt.Errorf("packTSparse overflow")
+			}
+			buf[pos] = ByteToRoot(ts[blk][j])
+		}
+	}
+
+	return encryptPacked(buf, cc)
+}
+
+// 각 target block 내부에서 문자 순서를 뒤집음
+// GBFV의 ReverseCharacters 대응
+func revSparse(ct *rlwe.Ciphertext, m, n, chunk int, cc Context) (*rlwe.Ciphertext, error) {
+	acc, err := encryptZero(cc)
+	if err != nil {
+		return nil, err
+	}
+
+	for blk := 0; blk < n; blk++ {
+		base := blk * m * chunk
+
+		for i := 0; i < m; i++ {
+			src := base + i*chunk
+			dst := base + (m-1-i)*chunk
+			rot := src - dst
+
+			ctRot, err := cc.eval.RotateNew(ct, rot)
+			if err != nil {
+				return nil, fmt.Errorf("rev rotate blk=%d i=%d: %w", blk, i, err)
+			}
+
+			maskPt, err := makeMask(dst, cc.params.MaxSlots(), ctRot.Level(), cc)
+			if err != nil {
+				return nil, fmt.Errorf("rev mask blk=%d i=%d: %w", blk, i, err)
+			}
+
+			tmp, err := cc.eval.MulNew(ctRot, maskPt)
+			if err != nil {
+				return nil, fmt.Errorf("rev mul blk=%d i=%d: %w", blk, i, err)
+			}
+
+			if err := cc.eval.Rescale(tmp, tmp); err != nil {
+				return nil, fmt.Errorf("rev rescale blk=%d i=%d: %w", blk, i, err)
+			}
+
+			if err := cc.eval.Add(acc, tmp, acc); err != nil {
+				return nil, fmt.Errorf("rev add blk=%d i=%d: %w", blk, i, err)
+			}
+		}
 	}
 
 	return acc, nil
 }
 
-func ABlock(
-	ctAOrig *rlwe.Ciphertext,
-	block []PairIndex,
-	slots int,
-	cc Context,
-) (*rlwe.Ciphertext, error) {
-	src := make([]int, len(block))
-	for i, p := range block {
-		src[i] = p.IA
+// k번째 anti-diagonal에 필요한 문자들을 한 block으로 확장
+// reverse=false : query 쪽 인덱스 사용
+// reverse=true  : reversed target 쪽 인덱스 사용
+func expandDiag(ct *rlwe.Ciphertext, m, n, chunk, k int, reverse bool, cc Context) (*rlwe.Ciphertext, []int, []int, error) {
+	acc, err := encryptZero(cc)
+	if err != nil {
+		return nil, nil, nil, err
 	}
-	return BlockFromEncrypted(ctAOrig, src, slots, cc)
+
+	kOfSlot := []int{}
+	posOfSlot := []int{}
+	dst := 0
+
+	for blk := 0; blk < n; blk++ {
+		var pairs [][2]int
+
+		if k <= m+1 {
+			diagLen := k - 1
+			for t := 0; t < diagLen; t++ {
+				i := t
+				j := diagLen - 1 - t
+				pairs = append(pairs, [2]int{i, j})
+			}
+		} else {
+			diagLen := 2*m - k + 1
+			start := m - diagLen
+			for t := 0; t < diagLen; t++ {
+				i := start + t
+				j := m - 1 - t
+				pairs = append(pairs, [2]int{i, j})
+			}
+		}
+
+		for t, p := range pairs {
+			idx := p[0]
+			if reverse {
+				idx = p[1]
+			}
+
+			src := blk*m*chunk + idx*chunk
+			rot := src - dst
+
+			ctRot, err := cc.eval.RotateNew(ct, rot)
+			if err != nil {
+				return nil, nil, nil, fmt.Errorf("expand rotate blk=%d k=%d pos=%d: %w", blk, k, t, err)
+			}
+
+			maskPt, err := makeMask(dst, cc.params.MaxSlots(), ctRot.Level(), cc)
+			if err != nil {
+				return nil, nil, nil, fmt.Errorf("expand mask blk=%d k=%d pos=%d: %w", blk, k, t, err)
+			}
+
+			tmp, err := cc.eval.MulNew(ctRot, maskPt)
+			if err != nil {
+				return nil, nil, nil, fmt.Errorf("expand mul blk=%d k=%d pos=%d: %w", blk, k, t, err)
+			}
+
+			if err := cc.eval.Rescale(tmp, tmp); err != nil {
+				return nil, nil, nil, fmt.Errorf("expand rescale blk=%d k=%d pos=%d: %w", blk, k, t, err)
+			}
+
+			if err := cc.eval.Add(acc, tmp, acc); err != nil {
+				return nil, nil, nil, fmt.Errorf("expand add blk=%d k=%d pos=%d: %w", blk, k, t, err)
+			}
+
+			kOfSlot = append(kOfSlot, k)
+			posOfSlot = append(posOfSlot, t)
+			dst++
+		}
+	}
+
+	return acc, kOfSlot, posOfSlot, nil
 }
 
-func BBlock(
-	ctBOrig *rlwe.Ciphertext,
-	block []PairIndex,
-	slots int,
-	cc Context,
-) (*rlwe.Ciphertext, error) {
-	src := make([]int, len(block))
-	for i, p := range block {
-		src[i] = p.JB
-	}
-	return BlockFromEncrypted(ctBOrig, src, slots, cc)
-}
-
-func PrecompDeltas(a, b []int, cc Context) (*DeltaTable, error) {
-	if len(a) != len(b) {
-		return nil, fmt.Errorf("different length")
+// query 1개 vs target N개를 sparse input + expand 방식으로 eq table 생성
+func Delta1N(q []int, ts [][]int, cc Context) (*DeltaTable, error) {
+	if len(ts) == 0 {
+		return nil, fmt.Errorf("empty targets")
 	}
 
-	m := len(a)
-	slots := m * m
-	if slots > cc.params.MaxSlots() {
-		slots = cc.params.MaxSlots()
+	m := len(q)
+	n := len(ts)
+
+	for i := 0; i < n; i++ {
+		if len(ts[i]) != m {
+			return nil, fmt.Errorf("different length at target %d", i)
+		}
 	}
 
-	pairs, err := buildIndexes(m)
+	chunk, err := chunkSize(m, n, cc.params.MaxSlots())
 	if err != nil {
 		return nil, err
 	}
 
-	blocks, kOfSlot, posInDiag, valid, err := packBlocks(pairs, slots)
+	ctQ, err := packQSparse(q, n, chunk, cc)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("packQSparse: %w", err)
 	}
 
-	ctAOrig, err := encryptString(a, cc)
+	ctT0, err := packTSparse(ts, chunk, cc)
 	if err != nil {
-		return nil, fmt.Errorf("encrypt a: %w", err)
+		return nil, fmt.Errorf("packTSparse: %w", err)
 	}
 
-	ctBOrig, err := encryptString(b, cc)
+	ctT, err := revSparse(ctT0, m, n, chunk, cc)
 	if err != nil {
-		return nil, fmt.Errorf("encrypt b: %w", err)
+		return nil, fmt.Errorf("revSparse: %w", err)
 	}
 
-	deltaBlocks := make([]*rlwe.Ciphertext, len(blocks))
-	for blk := range blocks {
-		ctAblk, err := ABlock(ctAOrig, blocks[blk], slots, cc)
+	var deltaBlocks []*rlwe.Ciphertext
+	var kOfSlot [][]int
+	var posInDiag [][]int
+	var valid [][]bool
+
+	for k := 2; k <= 2*m; k++ {
+		ctA, ks, ps, err := expandDiag(ctQ, m, n, chunk, k, false, cc)
 		if err != nil {
-			return nil, fmt.Errorf("A block %d: %w", blk, err)
+			return nil, fmt.Errorf("expandDiag query k=%d: %w", k, err)
 		}
 
-		ctBblk, err := BBlock(ctBOrig, blocks[blk], slots, cc)
+		ctB, _, _, err := expandDiag(ctT, m, n, chunk, k, true, cc)
 		if err != nil {
-			return nil, fmt.Errorf("B block %d: %w", blk, err)
+			return nil, fmt.Errorf("expandDiag target k=%d: %w", k, err)
 		}
 
-		// ===== debug: block 0의 gather 결과 확인 =====
-		if blk == 0 {
-			aVals := make([]complex128, cc.params.MaxSlots())
-			bVals := make([]complex128, cc.params.MaxSlots())
+		ctEq := EvalEquality(ctA, ctB, cc)
 
-			if err := cc.encoder.Decode(cc.decryptor.DecryptNew(ctAblk), aVals); err != nil {
-				return nil, fmt.Errorf("decode A block %d: %w", blk, err)
-			}
-			if err := cc.encoder.Decode(cc.decryptor.DecryptNew(ctBblk), bVals); err != nil {
-				return nil, fmt.Errorf("decode B block %d: %w", blk, err)
-			}
+		deltaBlocks = append(deltaBlocks, ctEq)
+		kOfSlot = append(kOfSlot, ks)
+		posInDiag = append(posInDiag, ps)
 
-			fmt.Println("=== gathered block 0 before EvalEquality ===")
-			for s := 0; s < slots; s++ {
-				if !valid[blk][s] {
-					continue
-				}
-				fmt.Printf("slot=%d k=%d pos=%d A=%0.4f%+0.4fi B=%0.4f%+0.4fi\n",
-					s,
-					kOfSlot[blk][s],
-					posInDiag[blk][s],
-					real(aVals[s]), imag(aVals[s]),
-					real(bVals[s]), imag(bVals[s]),
-				)
-			}
+		v := make([]bool, len(ks))
+		for i := range v {
+			v[i] = true
 		}
-		// ===== debug 끝 =====
-
-		ctEq := EvalEquality(ctBblk, ctBblk, cc)
-		deltaBlocks[blk] = ctEq
+		valid = append(valid, v)
 	}
 
 	return &DeltaTable{
@@ -341,7 +310,7 @@ func PrecompDeltas(a, b []int, cc Context) (*DeltaTable, error) {
 		PosInDiag:   posInDiag,
 		Valid:       valid,
 		M:           m,
-		Slots:       slots,
-		PairCount:   m * m,
+		Slots:       cc.params.MaxSlots(),
+		PairCount:   n * m * m,
 	}, nil
 }
