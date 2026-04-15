@@ -36,6 +36,10 @@ import (
 	"flag"
 	"fmt"
 	"math"
+<<<<<<< HEAD
+=======
+	"math/rand"
+>>>>>>> 16833429126f34fbc21d47b5de048bc5aa88b519
 	"time"
 
 	"github.com/tuneinsight/lattigo/v6/circuits/ckks/bootstrapping"
@@ -63,6 +67,7 @@ type Context struct {
 func main() {
 
 	flag.Parse()
+	rand.Seed(time.Now().UnixNano())
 
 	// Default LogN, which with the following defined parameters
 	// provides a security of 128-bit.
@@ -91,7 +96,7 @@ func main() {
 	qiSlotsToCoeffs := []int{39, 39, 39} // 1) SlotsToCoeffs
 
 	// len(qiCircuitsSlots) = available depth
-	qiCircuitSlots := []int{45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45} // 0) Circuit in the slot domain
+	qiCircuitSlots := []int{45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45} // 0) Circuit in the slot domain
 	qiEvalMod := []int{60, 60, 60, 60, 60, 60, 60, 60}                                              // 6) EvalMod
 	qiCoeffsToSlots := []int{56, 56, 56, 56}                                                        // 5) CoeffsToSlots
 
@@ -192,7 +197,14 @@ func main() {
 	decryptor := rlwe.NewDecryptor(params, sk)
 	encryptor := rlwe.NewEncryptor(params, pk)
 
-	m := 8
+	lengths := []int{8}
+	N := 4 // target 개수
+	maxM := 0
+	for _, m := range lengths {
+		if m > maxM {
+			maxM = m
+		}
+	}
 
 	fmt.Println()
 	fmt.Println("Generating bootstrapping evaluation keys...")
@@ -201,35 +213,18 @@ func main() {
 		panic(err)
 	}
 
-	//BlockFromEncrypted에서 쓸 추가 rotation
-	gatherSlots := m * m
-	if gatherSlots > params.MaxSlots() {
-		gatherSlots = params.MaxSlots()
-	}
+	rots := needRotsExpand(params.MaxSlots(), maxM, N)
 
-	galEls := make([]uint64, 0, 2*(gatherSlots-1))
-	for r := 1; r < gatherSlots; r++ {
-		fmt.Println(r)
+	galEls := make([]uint64, 0, len(rots))
+	for _, r := range rots {
 		galEls = append(galEls, params.GaloisElement(r))
-		galEls = append(galEls, params.GaloisElement(-r))
 	}
 
 	gk := kgen.GenGaloisKeysNew(galEls, sk)
-
 	for i, key := range gk {
 		evk.GaloisKeys[galEls[i]] = key
 	}
 
-	fmt.Println("Done")
-
-	//========================
-	//=== 4) BOOTSTRAPPING ===
-	//========================
-
-	// Instantiates the evaluator
-
-	// ckks evaluator 에는 add, mult, rotation과 같은 함수들이 있음.
-	// 시간나면 member 함수 목록들을 보면서 모르는것들을 공부해나가면 좋음.
 	eval := ckks.NewEvaluator(params, evk)
 
 	var btp *bootstrapping.Evaluator
@@ -250,17 +245,20 @@ func main() {
 	cc.poly_eval = poly_eval
 	cc.max_lv = max_lv
 
-	a := make([]int, m)
-	b := make([]int, m)
+	for _, m := range lengths {
+		fmt.Printf("\n==============================\n")
+		fmt.Printf("packed 1:N experiment | m=%d | N=%d\n", m, N)
+		fmt.Printf("==============================\n")
 
-	for i := 0; i < m; i++ {
-		x := i
-		y := i
+		query := RandomStringInts(m, AlphabetSize)
+		targets := RandomSetMatch(query, N, AlphabetSize)
 
-		a[i] = int(x)
-		b[i] = int(y)
-	}
+		fmt.Println("query =", query)
+		for i := 0; i < len(targets); i++ {
+			fmt.Printf("target[%d] = %v\n", i, targets[i])
+		}
 
+<<<<<<< HEAD
 	vec := make([]complex128, params.MaxSlots())
 	plaintext := ckks.NewPlaintext(params, 1+3+1+4)
 	encoder.Encode(vec, plaintext)
@@ -296,42 +294,71 @@ func main() {
 	return
 	fmt.Println("a =", a)
 	fmt.Println("b =", b)
-
-	dt, err := PrecompDeltas(a, b, cc)
-	if err != nil {
-		fmt.Printf("PrecompDeltas error: %+v\n", err)
-		panic(err)
-	}
-
-	fmt.Println("m =", dt.M)
-	fmt.Println("pair count =", dt.PairCount)
-	fmt.Println("num blocks =", len(dt.DeltaBlocks))
-
-	for blk, ct := range dt.DeltaBlocks {
-		fmt.Printf("\n=== Delta block %d ===\n", blk)
-
-		slots := ct.Slots()
-		if !ct.IsBatched {
-			slots *= 2
-		}
-
-		values := make([]complex128, slots)
-		if err := encoder.Decode(decryptor.DecryptNew(ct), values); err != nil {
+=======
+		dt, err := Delta1N(query, targets, cc)
+		if err != nil {
 			panic(err)
 		}
+>>>>>>> 16833429126f34fbc21d47b5de048bc5aa88b519
 
-		for s := 0; s < slots; s++ {
-			if !dt.Valid[blk][s] {
+		fmt.Println("m =", dt.M)
+		fmt.Println("pair count =", dt.PairCount)
+		fmt.Println("num blocks =", len(dt.DeltaBlocks))
+
+
+		for blk, ct := range dt.DeltaBlocks {
+			fmt.Printf("\n=== Delta block %d ===\n", blk)
+
+			slots := ct.Slots()
+			if !ct.IsBatched {
+				slots *= 2
+			}
+
+			values := make([]complex128, slots)
+			if err := encoder.Decode(decryptor.DecryptNew(ct), values); err != nil {
+				panic(err)
+			}
+
+			limit := len(dt.Valid[blk])
+			if len(values) < limit {
+				limit = len(values)
+			}
+			if limit == 0 {
 				continue
 			}
-			fmt.Printf("slot=%d k=%d pos=%d eq≈%.4f\n",
-				s,
-				dt.KOfSlot[blk][s],
-				dt.PosInDiag[blk][s],
-				real(values[s]),
-			)
+
+			k := dt.KOfSlot[blk][0]
+			diagLen := DiagLen(k, dt.M)
+			numTargets := limit / diagLen
+
+			fmt.Printf("k=%d diagLen=%d targets=%d\n", k, diagLen, numTargets)
+
+			for t := 0; t < numTargets; t++ {
+				fmt.Printf("target[%d]\n", t)
+				start := t * diagLen
+				end := start + diagLen
+
+				for s := start; s < end; s++ {
+					if !dt.Valid[blk][s] {
+						continue
+					}
+					pos := dt.PosInDiag[blk][s]
+					i, j := ijOf(k, pos, dt.M)
+					fmt.Printf("  (i=%d,j=%d) eq≈%.4f\n", i, j, real(values[s]))
+				}
+			}
 		}
 	}
+
+	//========================
+	//=== 4) BOOTSTRAPPING ===
+	//========================
+
+	// Instantiates the evaluator
+
+	// ckks evaluator 에는 add, mult, rotation과 같은 함수들이 있음.
+	// 시간나면 member 함수 목록들을 보면서 모르는것들을 공부해나가면 좋음.
+
 
 	/*
 		// Generate a random plaintext with values uniformly distributed in [-1, 1] for the real and imaginary part.
@@ -443,4 +470,137 @@ func printDebug(params ckks.Parameters, ciphertext *rlwe.Ciphertext, valuesWant 
 	fmt.Println()
 
 	return
+}
+
+func RandomStringInts(m int, alphabetSize int) []int {
+	s := make([]int, m)
+	for i := 0; i < m; i++ {
+		s[i] = rand.Intn(alphabetSize)
+	}
+	return s
+}
+
+func RandomSet(n int, m int, alphabetSize int) [][]int {
+	targets := make([][]int, n)
+	for i := 0; i < n; i++ {
+		targets[i] = RandomStringInts(m, alphabetSize)
+	}
+	return targets
+}
+
+func RandomSetMatch(query []int, n int, alphabetSize int) [][]int {
+	m := len(query)
+	targets := make([][]int, n)
+
+	for i := 0; i < n; i++ {
+		targets[i] = RandomStringInts(m, alphabetSize)
+	}
+
+	if n > 0 {
+		match := make([]int, m)
+		copy(match, query)
+		targets[0] = match
+	}
+
+	return targets
+}
+
+func PrintDelta(dt *DeltaTable, ct *rlwe.Ciphertext, encoder *ckks.Encoder, decryptor *rlwe.Decryptor) error {
+	slots := ct.Slots()
+	if !ct.IsBatched {
+		slots *= 2
+	}
+
+	values := make([]complex128, slots)
+	if err := encoder.Decode(decryptor.DecryptNew(ct), values); err != nil {
+		return err
+	}
+
+	for s := 0; s < slots; s++ {
+		if !dt.Valid[0][s] {
+			continue
+		}
+		fmt.Printf("slot=%d k=%d pos=%d eq≈%.4f\n",
+			s,
+			dt.KOfSlot[0][s],
+			dt.PosInDiag[0][s],
+			real(values[s]),
+		)
+	}
+	return nil
+}
+
+func needRotsExpand(maxSlots, m, n int) []int {
+	chunk := maxSlots / (n * m)
+	if chunk < 1 {
+		return nil
+	}
+
+	seen := make(map[int]bool)
+	rots := make([]int, 0)
+
+	// revSparse에서 필요한 회전
+	for blk := 0; blk < n; blk++ {
+		base := blk * m * chunk
+		for i := 0; i < m; i++ {
+			src := base + i*chunk
+			dst := base + (m-1-i)*chunk
+			r := src - dst
+			if r != 0 && !seen[r] {
+				seen[r] = true
+				rots = append(rots, r)
+			}
+		}
+	}
+
+	// expandDiag에서 필요한 회전
+	for k := 2; k <= 2*m; k++ {
+		dst := 0
+		diagLen := DiagLen(k, m)
+
+		for blk := 0; blk < n; blk++ {
+			for t := 0; t < diagLen; t++ {
+				var i, j int
+				if k <= m+1 {
+					i = t
+					j = diagLen - 1 - t
+				} else {
+					start := m - diagLen
+					i = start + t
+					j = m - 1 - t
+				}
+
+				srcQ := blk*m*chunk + i*chunk
+				srcT := blk*m*chunk + j*chunk
+
+				rq := srcQ - dst
+				rt := srcT - dst
+
+				if rq != 0 && !seen[rq] {
+					seen[rq] = true
+					rots = append(rots, rq)
+				}
+				if rt != 0 && !seen[rt] {
+					seen[rt] = true
+					rots = append(rots, rt)
+				}
+				dst++
+			}
+		}
+	}
+
+	return rots
+}
+
+func ijOf(k, pos, m int) (int, int) {
+	if k <= m+1 {
+		i := pos
+		j := (k - 2) - pos
+		return i, j
+	}
+	diagLen := 2*m - k + 1
+	start := m - diagLen
+	i := start + pos
+	j := m - 1 - pos
+	return i, j
 }
