@@ -36,6 +36,7 @@ import (
 	"flag"
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/tuneinsight/lattigo/v6/circuits/ckks/bootstrapping"
 	"github.com/tuneinsight/lattigo/v6/circuits/ckks/dft"
@@ -260,6 +261,39 @@ func main() {
 		b[i] = int(y)
 	}
 
+	vec := make([]complex128, params.MaxSlots())
+	plaintext := ckks.NewPlaintext(params, 1+3+1+4)
+	encoder.Encode(vec, plaintext)
+	ctxt, err := encryptor.EncryptNew(plaintext)
+
+	test := time.Now()
+	for i := 0; i < 256*8; i++ {
+		eval.Rotate(ctxt, 1, ctxt)
+	}
+	fmt.Println(time.Since(test))
+
+	test = time.Now()
+	for i := 0; i < 256; i++ {
+		temp, _ := eval.MulRelinNew(ctxt, ctxt)
+		eval.Rescale(temp, temp)
+		temp, _ = eval.MulRelinNew(ctxt, ctxt)
+		eval.Rescale(temp, temp)
+		temp, _ = eval.MulRelinNew(ctxt, ctxt)
+		eval.Rescale(temp, temp)
+		temp, _ = eval.MulRelinNew(ctxt, ctxt)
+		eval.Rescale(temp, temp)
+		temp, _ = eval.MulRelinNew(ctxt, ctxt)
+		eval.Rescale(temp, temp)
+		temp, _ = eval.MulRelinNew(ctxt, ctxt)
+		eval.Rescale(temp, temp)
+		temp, _ = eval.MulRelinNew(ctxt, ctxt)
+		eval.Rescale(temp, temp)
+		temp, _ = eval.MulRelinNew(ctxt, ctxt)
+		eval.Rescale(temp, temp)
+	}
+	fmt.Println(time.Since(test))
+
+	return
 	fmt.Println("a =", a)
 	fmt.Println("b =", b)
 
