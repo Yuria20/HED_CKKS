@@ -215,8 +215,7 @@ func main() {
 	cc.Encoder = encoder
 	cc.Encryptor = encryptor
 	cc.Decryptor = decryptor
-	cc.Eval = eval
-	cc.Btp = btp
+	cc.Eval = btp
 	cc.Poly_eval = poly_eval
 	cc.Max_lv = max_lv
 
