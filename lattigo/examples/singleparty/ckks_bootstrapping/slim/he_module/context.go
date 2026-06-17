@@ -2,6 +2,7 @@ package he
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/tuneinsight/lattigo/v6/circuits/ckks/bootstrapping"
 	"github.com/tuneinsight/lattigo/v6/circuits/ckks/dft"
@@ -13,33 +14,61 @@ import (
 )
 
 type Context struct {
-	Params    *ckks.Parameters
+	Params    ckks.Parameters
 	Encoder   *ckks.Encoder
 	Encryptor *rlwe.Encryptor
 	Decryptor *rlwe.Decryptor
 	Eval      *bootstrapping.Evaluator
-	Poly_eval *polynomial.Evaluator
+	PolyEval  *polynomial.Evaluator
+	Min_lv    int
+	Avail_lv  int
 	Max_lv    int
-	logB      int
+	LogB      int
 	H         int
 }
 
-func (cc Context) GenContext(logN int) {
+func (cc *Context) GenContext(logN int, Avail_lv int, LogB int, H int) {
 	LogN := logN
 
-	LogDefaultScale := 45
+	LogDefaultScale := 50
+	sz := LogDefaultScale
 
-	q0 := []int{50}                                                         // ScaleDown & ModUp
-	qiSlotsToCoeffs := []int{39, 39, 39}                                    // SlotsToCoeffs
-	qiCircuitSlots := []int{45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45} // Circuit in slots
-	qiLookUpTable := []int{50, 50, 50, 50, 50, 50}
-	qiEvalMod := []int{60, 60, 60, 60, 60, 60, 60, 60} // EvalMod
-	qiCoeffsToSlots := []int{56, 56, 56}               // CoeffsToSlots
+	q0 := []int{sz}                      // ScaleDown & ModUp
+	qiSlotsToCoeffs := []int{39, 39, 39} // SlotsToCoeffs
+	qiCircuitSlots := []int{}            // Circuit in slots
+	for i := 0; i < Avail_lv; i++ {
+		qiCircuitSlots = append(qiCircuitSlots, []int{sz}...)
+	}
+	qiLookUpTable := []int{}
+	for i := 0; i < LogB+H; i++ {
+		qiLookUpTable = append(qiLookUpTable, []int{sz}...)
+	}
+	qiEvalMod := []int{sz, sz, sz, sz, sz, sz, sz, sz} // EvalMod
+	qiCoeffsToSlots := []int{42, 42, 42}               // CoeffsToSlots
+
+	/// print
+	arrays := []struct {
+		name string
+		vals []int
+	}{
+		{"q0", q0},
+		{"S2C", qiSlotsToCoeffs},
+		{"Circuit", qiCircuitSlots},
+		{"LUT", qiLookUpTable},
+		{"EvalExp", qiEvalMod},
+		{"C2S", qiCoeffsToSlots},
+	}
+
+	for _, a := range arrays {
+		fmt.Printf("%s : %v\n", a.name, a.vals)
+	}
 
 	LogQ := append([]int{}, q0...)
 	LogQ = append(LogQ, qiSlotsToCoeffs...)
+	min_lv := len(LogQ) - 1
 	LogQ = append(LogQ, qiCircuitSlots...)
-
+	max_lv := len(LogQ) - 1
+	LogQ = append(LogQ, qiLookUpTable...)
 	LogQ = append(LogQ, qiEvalMod...)
 	LogQ = append(LogQ, qiCoeffsToSlots...)
 
@@ -47,7 +76,7 @@ func (cc Context) GenContext(logN int) {
 	params, err := ckks.NewParametersFromLiteral(ckks.ParametersLiteral{
 		LogN:            LogN,
 		LogQ:            LogQ,
-		LogP:            []int{61, 61, 61, 61, 61},
+		LogP:            []int{sz + 1, sz + 1, sz + 1, sz + 1, sz + 1},
 		LogDefaultScale: LogDefaultScale,
 		Xs:              ring.Ternary{H: 192},
 	})
@@ -68,21 +97,24 @@ func (cc Context) GenContext(logN int) {
 
 	Mod1Params := mod1.ParametersLiteral{
 		LevelQ:          params.MaxLevel() - CoeffsToSlotsParams.Depth(true),
-		LogScale:        60,
+		LogScale:        sz,
 		Mod1Type:        mod1.CosDiscrete,
 		Mod1Degree:      30,
 		DoubleAngle:     3,
 		K:               16,
-		LogMessageRatio: 10,
+		LogMessageRatio: 0,
 		Mod1InvDegree:   0,
 	}
 
+	B := 1 << LogB
+	S2C_scale := *big.NewFloat(float64(1.0) / float64(B))
 	SlotsToCoeffsParams := dft.MatrixLiteral{
 		Type:         dft.HomomorphicDecode,
 		LogSlots:     params.LogMaxSlots(),
 		LogBSGSRatio: 1,
 		LevelP:       params.MaxLevelP(),
 		Levels:       []int{1, 1, 1},
+		Scaling:      &S2C_scale,
 	}
 	SlotsToCoeffsParams.LevelQ = len(SlotsToCoeffsParams.Levels)
 
@@ -125,10 +157,17 @@ func (cc Context) GenContext(logN int) {
 		panic(err)
 	}
 
-	cc.Params = &params
+	polyEval := polynomial.NewEvaluator(params, Eval.Evaluator)
+
+	cc.Params = params
 	cc.Encoder = Encoder
 	cc.Encryptor = Encryptor
 	cc.Decryptor = Decryptor
-	cc.Max_lv = len(LogQ) - 1
+	cc.Min_lv = min_lv
+	cc.Avail_lv = Avail_lv
+	cc.Max_lv = max_lv
 	cc.Eval = Eval
+	cc.LogB = LogB
+	cc.H = H
+	cc.PolyEval = polyEval
 }
