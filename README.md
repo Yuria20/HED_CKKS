@@ -70,6 +70,7 @@ go run .
 이 함수는 **암호문을 복호화한 평문의 오차를 계산하여 출력**한다.
 
 오차 계산 방식은 이렇다:
+<img width="715" height="416" alt="image" src="https://github.com/user-attachments/assets/0fc267f3-94e2-40dd-bc5d-ad5682bad990" />
 
 - 복호화된 각 데이터와, 그에 **가장 가까운 정수**와의 오차를 log 수준으로 비교한다.
 - 이 거리는 **L2 norm**, 즉 `√(실수부² + 허수부²)`로 계산한다.
