@@ -1,6 +1,7 @@
 package main
 
 import (
+	he "banded_dp/he_module"
 	"fmt"
 	"math"
 
@@ -35,29 +36,29 @@ func DiagLen(k, m int) int {
 	return 2*m - k + 1
 }
 
-func encryptPacked(values []complex128, cc Context) (*rlwe.Ciphertext, error) {
-	pt := ckks.NewPlaintext(*cc.params, cc.max_lv)
-	if err := cc.encoder.Encode(values, pt); err != nil {
+func encryptPacked(values []complex128, cc he.Context) (*rlwe.Ciphertext, error) {
+	pt := ckks.NewPlaintext(*cc.Params, cc.Max_lv)
+	if err := cc.Encoder.Encode(values, pt); err != nil {
 		return nil, err
 	}
-	return cc.encryptor.EncryptNew(pt)
+	return cc.Encryptor.EncryptNew(pt)
 }
 
-func encryptZero(cc Context) (*rlwe.Ciphertext, error) {
-	zeros := make([]complex128, cc.params.MaxSlots())
+func encryptZero(cc he.Context) (*rlwe.Ciphertext, error) {
+	zeros := make([]complex128, cc.Params.MaxSlots())
 	return encryptPacked(zeros, cc)
 }
 
-func makeMask(slot, slots, level int, cc Context) (*rlwe.Plaintext, error) {
+func makeMask(slot, slots, level int, cc he.Context) (*rlwe.Plaintext, error) {
 	if slot < 0 || slot >= slots {
 		return nil, fmt.Errorf("invalid mask slot=%d for slots=%d", slot, slots)
 	}
 
-	mask := make([]complex128, cc.params.MaxSlots())
+	mask := make([]complex128, cc.Params.MaxSlots())
 	mask[slot] = 1
 
-	pt := ckks.NewPlaintext(*cc.params, level)
-	if err := cc.encoder.Encode(mask, pt); err != nil {
+	pt := ckks.NewPlaintext(*cc.Params, level)
+	if err := cc.Encoder.Encode(mask, pt); err != nil {
 		return nil, err
 	}
 	return pt, nil
@@ -77,9 +78,9 @@ func chunkSize(m, n, maxSlots int) (int, error) {
 }
 
 // query 하나를 N개 block에 복제해서 sparse하게 pack
-func packQSparse(q []int, n int, chunk int, cc Context) (*rlwe.Ciphertext, error) {
+func packQSparse(q []int, n int, chunk int, cc he.Context) (*rlwe.Ciphertext, error) {
 	m := len(q)
-	buf := make([]complex128, cc.params.MaxSlots())
+	buf := make([]complex128, cc.Params.MaxSlots())
 
 	for blk := 0; blk < n; blk++ {
 		base := blk * m * chunk
@@ -96,13 +97,13 @@ func packQSparse(q []int, n int, chunk int, cc Context) (*rlwe.Ciphertext, error
 }
 
 // target N개를 sparse하게 pack
-func packTSparse(ts [][]int, chunk int, cc Context) (*rlwe.Ciphertext, error) {
+func packTSparse(ts [][]int, chunk int, cc he.Context) (*rlwe.Ciphertext, error) {
 	if len(ts) == 0 {
 		return nil, fmt.Errorf("empty targets")
 	}
 
 	m := len(ts[0])
-	buf := make([]complex128, cc.params.MaxSlots())
+	buf := make([]complex128, cc.Params.MaxSlots())
 
 	for blk := 0; blk < len(ts); blk++ {
 		if len(ts[blk]) != m {
@@ -124,7 +125,7 @@ func packTSparse(ts [][]int, chunk int, cc Context) (*rlwe.Ciphertext, error) {
 
 // 각 target block 내부에서 문자 순서를 뒤집음
 // GBFV의 ReverseCharacters 대응
-func revSparse(ct *rlwe.Ciphertext, m, n, chunk int, cc Context) (*rlwe.Ciphertext, error) {
+func revSparse(ct *rlwe.Ciphertext, m, n, chunk int, cc he.Context) (*rlwe.Ciphertext, error) {
 	acc, err := encryptZero(cc)
 	if err != nil {
 		return nil, err
@@ -138,26 +139,26 @@ func revSparse(ct *rlwe.Ciphertext, m, n, chunk int, cc Context) (*rlwe.Cipherte
 			dst := base + (m-1-i)*chunk
 			rot := src - dst
 
-			ctRot, err := cc.eval.RotateNew(ct, rot)
+			ctRot, err := cc.Eval.RotateNew(ct, rot)
 			if err != nil {
 				return nil, fmt.Errorf("rev rotate blk=%d i=%d: %w", blk, i, err)
 			}
 
-			maskPt, err := makeMask(dst, cc.params.MaxSlots(), ctRot.Level(), cc)
+			maskPt, err := makeMask(dst, cc.Params.MaxSlots(), ctRot.Level(), cc)
 			if err != nil {
 				return nil, fmt.Errorf("rev mask blk=%d i=%d: %w", blk, i, err)
 			}
 
-			tmp, err := cc.eval.MulNew(ctRot, maskPt)
+			tmp, err := cc.Eval.MulNew(ctRot, maskPt)
 			if err != nil {
 				return nil, fmt.Errorf("rev mul blk=%d i=%d: %w", blk, i, err)
 			}
 
-			if err := cc.eval.Rescale(tmp, tmp); err != nil {
+			if err := cc.Eval.Rescale(tmp, tmp); err != nil {
 				return nil, fmt.Errorf("rev rescale blk=%d i=%d: %w", blk, i, err)
 			}
 
-			if err := cc.eval.Add(acc, tmp, acc); err != nil {
+			if err := cc.Eval.Add(acc, tmp, acc); err != nil {
 				return nil, fmt.Errorf("rev add blk=%d i=%d: %w", blk, i, err)
 			}
 		}
@@ -169,7 +170,7 @@ func revSparse(ct *rlwe.Ciphertext, m, n, chunk int, cc Context) (*rlwe.Cipherte
 // k번째 anti-diagonal에 필요한 문자들을 한 block으로 확장
 // reverse=false : query 쪽 인덱스 사용
 // reverse=true  : reversed target 쪽 인덱스 사용
-func expandDiag(ct *rlwe.Ciphertext, m, n, chunk, k int, reverse bool, cc Context) (*rlwe.Ciphertext, []int, []int, error) {
+func expandDiag(ct *rlwe.Ciphertext, m, n, chunk, k int, reverse bool, cc he.Context) (*rlwe.Ciphertext, []int, []int, error) {
 	acc, err := encryptZero(cc)
 	if err != nil {
 		return nil, nil, nil, err
@@ -208,26 +209,26 @@ func expandDiag(ct *rlwe.Ciphertext, m, n, chunk, k int, reverse bool, cc Contex
 			src := blk*m*chunk + idx*chunk
 			rot := src - dst
 
-			ctRot, err := cc.eval.RotateNew(ct, rot)
+			ctRot, err := cc.Eval.RotateNew(ct, rot)
 			if err != nil {
 				return nil, nil, nil, fmt.Errorf("expand rotate blk=%d k=%d pos=%d: %w", blk, k, t, err)
 			}
 
-			maskPt, err := makeMask(dst, cc.params.MaxSlots(), ctRot.Level(), cc)
+			maskPt, err := makeMask(dst, cc.Params.MaxSlots(), ctRot.Level(), cc)
 			if err != nil {
 				return nil, nil, nil, fmt.Errorf("expand mask blk=%d k=%d pos=%d: %w", blk, k, t, err)
 			}
 
-			tmp, err := cc.eval.MulNew(ctRot, maskPt)
+			tmp, err := cc.Eval.MulNew(ctRot, maskPt)
 			if err != nil {
 				return nil, nil, nil, fmt.Errorf("expand mul blk=%d k=%d pos=%d: %w", blk, k, t, err)
 			}
 
-			if err := cc.eval.Rescale(tmp, tmp); err != nil {
+			if err := cc.Eval.Rescale(tmp, tmp); err != nil {
 				return nil, nil, nil, fmt.Errorf("expand rescale blk=%d k=%d pos=%d: %w", blk, k, t, err)
 			}
 
-			if err := cc.eval.Add(acc, tmp, acc); err != nil {
+			if err := cc.Eval.Add(acc, tmp, acc); err != nil {
 				return nil, nil, nil, fmt.Errorf("expand add blk=%d k=%d pos=%d: %w", blk, k, t, err)
 			}
 
@@ -241,7 +242,7 @@ func expandDiag(ct *rlwe.Ciphertext, m, n, chunk, k int, reverse bool, cc Contex
 }
 
 // query 1개 vs target N개를 sparse input + expand 방식으로 eq table 생성
-func Delta1N(q []int, ts [][]int, cc Context) (*DeltaTable, error) {
+func Delta1N(q []int, ts [][]int, cc he.Context) (*DeltaTable, error) {
 	if len(ts) == 0 {
 		return nil, fmt.Errorf("empty targets")
 	}
@@ -255,7 +256,7 @@ func Delta1N(q []int, ts [][]int, cc Context) (*DeltaTable, error) {
 		}
 	}
 
-	chunk, err := chunkSize(m, n, cc.params.MaxSlots())
+	chunk, err := chunkSize(m, n, cc.Params.MaxSlots())
 	if err != nil {
 		return nil, err
 	}
@@ -310,7 +311,7 @@ func Delta1N(q []int, ts [][]int, cc Context) (*DeltaTable, error) {
 		PosInDiag:   posInDiag,
 		Valid:       valid,
 		M:           m,
-		Slots:       cc.params.MaxSlots(),
+		Slots:       cc.Params.MaxSlots(),
 		PairCount:   n * m * m,
 	}, nil
 }

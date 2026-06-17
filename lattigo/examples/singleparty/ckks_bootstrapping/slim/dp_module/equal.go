@@ -1,6 +1,8 @@
 package main
 
 import (
+	he "banded_dp/he_module"
+
 	"github.com/tuneinsight/lattigo/v6/circuits/ckks/polynomial"
 	"github.com/tuneinsight/lattigo/v6/core/rlwe"
 	"github.com/tuneinsight/lattigo/v6/utils/bignum"
@@ -11,11 +13,11 @@ import (
 // Output : 출력 암호문은 x==y 이면 1을 그렇지 않으면 0이 저장됩니다.
 // description : 1. Compute exp(2pi*i*(x-y)/256) : ctxt2를 conjugation 한 뒤, ctxt1과 곱합니다.
 //  2. Hermite Interpoation : equality Look-up Table을 평가합니다.
-func EvalEquality(ciphertext1 *rlwe.Ciphertext, ciphertext2 *rlwe.Ciphertext, cc Context) *rlwe.Ciphertext {
+func EvalEquality(ciphertext1 *rlwe.Ciphertext, ciphertext2 *rlwe.Ciphertext, cc he.Context) *rlwe.Ciphertext {
 
-	eval := cc.eval
-	params := cc.params
-	poly_eval := cc.poly_eval
+	eval := cc.Eval
+	params := cc.Params
+	poly_eval := cc.Poly_eval
 
 	eq := func(x int) int {
 		if x == 0 {
@@ -62,7 +64,7 @@ func EvalEquality(ciphertext1 *rlwe.Ciphertext, ciphertext2 *rlwe.Ciphertext, cc
 	var f_coeffs bignum.Polynomial
 
 	// hermite order : 1
-	f_coeffs = bignum.NewPolynomial(0, HermiteInterpolation(256, 1, eq), nil)
+	f_coeffs = bignum.NewPolynomial(0, he.HermiteInterpolation(256, 1, eq), nil)
 
 	var poly_f polynomial.Polynomial
 	poly_f = polynomial.NewPolynomial(f_coeffs)
