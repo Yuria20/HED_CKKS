@@ -37,7 +37,7 @@ func DiagLen(k, m int) int {
 }
 
 func encryptPacked(values []complex128, cc he.Context) (*rlwe.Ciphertext, error) {
-	pt := ckks.NewPlaintext(*cc.Params, cc.Max_lv)
+	pt := ckks.NewPlaintext(cc.Params, cc.Max_lv)
 	if err := cc.Encoder.Encode(values, pt); err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func makeMask(slot, slots, level int, cc he.Context) (*rlwe.Plaintext, error) {
 	mask := make([]complex128, cc.Params.MaxSlots())
 	mask[slot] = 1
 
-	pt := ckks.NewPlaintext(*cc.Params, level)
+	pt := ckks.NewPlaintext(cc.Params, level)
 	if err := cc.Encoder.Encode(mask, pt); err != nil {
 		return nil, err
 	}

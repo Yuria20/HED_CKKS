@@ -796,6 +796,24 @@ func (eval Evaluator) EvalModAndScale(ctIn *rlwe.Ciphertext, scaling complex128)
 	return
 }
 
+func (eval Evaluator) EvalSinAndScale(ctIn *rlwe.Ciphertext, scaling complex128) (ctOut *rlwe.Ciphertext, err error) {
+	if ctOut, err = eval.Mod1Evaluator.EvaluateAndScaleNew2(ctIn, scaling, false); err != nil {
+		return nil, err
+	}
+
+	ctOut.Scale = eval.BootstrappingParameters.DefaultScale()
+	return
+}
+
+func (eval Evaluator) EvalCosAndScale(ctIn *rlwe.Ciphertext, scaling complex128) (ctOut *rlwe.Ciphertext, err error) {
+	if ctOut, err = eval.Mod1Evaluator.EvaluateAndScaleNew2(ctIn, scaling, true); err != nil {
+		return nil, err
+	}
+
+	ctOut.Scale = eval.BootstrappingParameters.DefaultScale()
+	return
+}
+
 func (eval Evaluator) SlotsToCoeffs(ctReal, ctImag *rlwe.Ciphertext) (ctOut *rlwe.Ciphertext, err error) {
 	return eval.DFTEvaluator.SlotsToCoeffsNew(ctReal, ctImag, eval.S2CDFTMatrix)
 }

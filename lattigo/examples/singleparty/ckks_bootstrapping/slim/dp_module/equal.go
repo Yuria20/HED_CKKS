@@ -17,7 +17,7 @@ func EvalEquality(ciphertext1 *rlwe.Ciphertext, ciphertext2 *rlwe.Ciphertext, cc
 
 	eval := cc.Eval
 	params := cc.Params
-	poly_eval := cc.Poly_eval
+	poly_eval := cc.PolyEval
 
 	eq := func(x int) int {
 		if x == 0 {
