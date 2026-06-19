@@ -1,7 +1,7 @@
-package main
+package dp_sim
 
 import (
-	he "banded_dp/he_module"
+	he "banded_dp/he"
 	"fmt"
 	"math"
 

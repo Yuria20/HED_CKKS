@@ -33,19 +33,14 @@
 package main
 
 import (
-	he "banded_dp/he_module"
+	dp "banded_dp/dp/dp_sim"
+	he "banded_dp/he"
+	util "banded_dp/util"
 	"flag"
 	"fmt"
 	"math"
-	"math/rand"
-	"time"
 
-	"github.com/tuneinsight/lattigo/v6/circuits/ckks/bootstrapping"
-	"github.com/tuneinsight/lattigo/v6/circuits/ckks/dft"
-	"github.com/tuneinsight/lattigo/v6/circuits/ckks/mod1"
-	"github.com/tuneinsight/lattigo/v6/circuits/ckks/polynomial"
 	"github.com/tuneinsight/lattigo/v6/core/rlwe"
-	"github.com/tuneinsight/lattigo/v6/ring"
 	"github.com/tuneinsight/lattigo/v6/schemes/ckks"
 )
 
@@ -54,171 +49,33 @@ var flagShort = flag.Bool("short", false, "run the example with a smaller and in
 func main() {
 
 	flag.Parse()
-	rand.Seed(time.Now().UnixNano())
 
 	// Default LogN, which with the following defined parameters
 	// provides a security of 128-bit.
-	LogN := 16
+	LogN := 13
 
 	if *flagShort {
 		LogN -= 3
 	}
 
-	//============================
-	//=== 1) SCHEME PARAMETERS ===
-	//============================
-
-	// In this example, for a pratical purpose, the residual parameters and bootstrapping
-	// parameters are the same. But in practice the residual parameters would not contain the
-	// moduli for the CoeffsToSlots and EvalMod steps.
-	// With LogN=16, LogQP=1221 and H=192, these parameters achieve well over 128-bit of security.
-	// For the purpose of the example, only one prime is allocated to the circuit in the slots domain
-	// and no prime is allocated to the circuit in the coeffs domain.
-
-	// scaling factor
-	LogDefaultScale := 45
-
-	// base modulus
-	q0 := []int{55}                      // 3) ScaleDown & 4) ModUp
-	qiSlotsToCoeffs := []int{39, 39, 39} // 1) SlotsToCoeffs
-
-	// len(qiCircuitsSlots) = available depth
-	qiCircuitSlots := []int{45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45} // 0) Circuit in the slot domain
-	qiEvalMod := []int{60, 60, 60, 60, 60, 60, 60, 60}                  // 6) EvalMod
-	qiCoeffsToSlots := []int{56, 56, 56, 56}                            // 5) CoeffsToSlots
-
-	LogQ := append(q0, qiSlotsToCoeffs...)
-	LogQ = append(LogQ, qiCircuitSlots...)
-	max_lv := len(LogQ) - 1
-	LogQ = append(LogQ, qiEvalMod...)
-	LogQ = append(LogQ, qiCoeffsToSlots...)
-
-	params, err := ckks.NewParametersFromLiteral(ckks.ParametersLiteral{
-		LogN:            LogN,                      // Log2 of the ring degree
-		LogQ:            LogQ,                      // Log2 of the ciphertext modulus
-		LogP:            []int{61, 61, 61, 61, 61}, // Log2 of the key-switch auxiliary prime moduli
-		LogDefaultScale: LogDefaultScale,           // Log2 of the scale
-		Xs:              ring.Ternary{H: 192},
-	})
-
-	if err != nil {
-		panic(err)
-	}
-
-	//====================================
-	//=== 2) BOOTSTRAPPING PARAMETERS ===
-	//====================================
-
-	// CoeffsToSlots parameters (homomorphic encoding)
-	CoeffsToSlotsParameters := dft.MatrixLiteral{
-		Type:         dft.HomomorphicEncode,
-		Format:       dft.RepackImagAsReal, // Returns the real and imaginary part into separate ciphertexts
-		LogSlots:     params.LogMaxSlots(),
-		LevelQ:       params.MaxLevelQ(),
-		LevelP:       params.MaxLevelP(),
-		LogBSGSRatio: 1,
-		Levels:       []int{1, 1, 1, 1}, //qiCoeffsToSlots
-	}
-
-	// Parameters of the homomorphic modular reduction x mod 1
-	Mod1ParametersLiteral := mod1.ParametersLiteral{
-		LevelQ:          params.MaxLevel() - CoeffsToSlotsParameters.Depth(true),
-		LogScale:        60,               // Matches qiEvalMod
-		Mod1Type:        mod1.CosDiscrete, // Multi-interval Chebyshev interpolation
-		Mod1Degree:      30,               // Depth 5
-		DoubleAngle:     3,                // Depth 3
-		K:               16,               // With EphemeralSecretWeight = 32 and 2^{15} slots, ensures < 2^{-138.7} failure probability
-		LogMessageRatio: 10,               // q/|m| = 2^10
-		Mod1InvDegree:   0,                // Depth 0
-	}
-
-	// SlotsToCoeffs parameters (homomorphic decoding)
-	SlotsToCoeffsParameters := dft.MatrixLiteral{
-		Type:         dft.HomomorphicDecode,
-		LogSlots:     params.LogMaxSlots(),
-		LogBSGSRatio: 1,
-		LevelP:       params.MaxLevelP(),
-		Levels:       []int{1, 1, 1}, // qiSlotsToCoeffs
-	}
-
-	SlotsToCoeffsParameters.LevelQ = len(SlotsToCoeffsParameters.Levels)
-
-	// Custom bootstrapping.Parameters.
-	// All fields are public and can be manually instantiated.
-	btpParams := bootstrapping.Parameters{
-		ResidualParameters:      params,
-		BootstrappingParameters: params,
-		SlotsToCoeffsParameters: SlotsToCoeffsParameters,
-		Mod1ParametersLiteral:   Mod1ParametersLiteral,
-		CoeffsToSlotsParameters: CoeffsToSlotsParameters,
-		EphemeralSecretWeight:   32, // > 128bit secure for LogN=16 and LogQP = 115.
-		CircuitOrder:            bootstrapping.DecodeThenModUp,
-	}
-
-	// We pring some information about the bootstrapping parameters (which are identical to the residual parameters in this example).
-	// We can notably check that the LogQP of the bootstrapping parameters is smaller than 1550, which ensures
-	// 128-bit of security as explained above.
-	fmt.Printf("Bootstrapping parameters: logN=%d, logSlots=%d, H(%d; %d), sigma=%f, logQP=%f, levels=%d, scale=2^%d\n",
-		btpParams.BootstrappingParameters.LogN(),
-		btpParams.BootstrappingParameters.LogMaxSlots(),
-		btpParams.BootstrappingParameters.XsHammingWeight(),
-		btpParams.EphemeralSecretWeight,
-		btpParams.BootstrappingParameters.Xe(),
-		btpParams.BootstrappingParameters.LogQP(),
-		btpParams.BootstrappingParameters.QCount(),
-		btpParams.BootstrappingParameters.LogDefaultScale())
-
-	//===========================
-	//=== 3) KEYGEN & ENCRYPT ===
-	//===========================
-
-	// Now that both the residual and bootstrapping parameters are instantiated, we can
-	// instantiate the usual necessary object to encode, encrypt and decrypt.
-
-	// Scheme context and keys
-	kgen := rlwe.NewKeyGenerator(params)
-
-	sk, pk := kgen.GenKeyPairNew()
-
-	encoder := ckks.NewEncoder(params)
-	decryptor := rlwe.NewDecryptor(params, sk)
-	encryptor := rlwe.NewEncryptor(params, pk)
-
-	lengths := []int{8}
-	//N := 4 // target 개수
-	maxM := 0
-	for _, m := range lengths {
-		if m > maxM {
-			maxM = m
-		}
-	}
-
-	fmt.Println()
-	fmt.Println("Generating bootstrapping evaluation keys...")
-	evk, _, err := btpParams.GenEvaluationKeys(sk)
-	if err != nil {
-		panic(err)
-	}
-
-	eval := ckks.NewEvaluator(params, evk)
-
-	var btp *bootstrapping.Evaluator
-
-	if btp, err = bootstrapping.NewEvaluator(btpParams, evk); err != nil {
-		panic(err)
-	}
-
-	poly_eval := polynomial.NewEvaluator(params, eval)
-
 	var cc he.Context
-	cc.Params = &params
-	cc.Encoder = encoder
-	cc.Encryptor = encryptor
-	cc.Decryptor = decryptor
-	cc.Eval = btp
-	cc.Poly_eval = poly_eval
-	cc.Max_lv = max_lv
+	fmt.Print("Generate Context... ")
+	cc.GenContext(LogN, 10, 4, 1)
+	fmt.Println("Done!")
 
+	str_len := 8
+	char_size := 127
+
+	fmt.Println("Packing Test... ")
+	var pack_ct dp.StrCipher
+	pack_ct.Length = str_len
+
+	strArr := util.SampleStringIntMany(cc.Params.MaxSlots(), str_len, char_size)
+	util.PrintString(strArr, "uint8")
+
+	pack_ct.StrEncrypt(cc, strArr)
+
+	util.StrDecryptAndPrint(cc, pack_ct, "uint8")
 }
 
 func printDebug(params ckks.Parameters, ciphertext *rlwe.Ciphertext, valuesWant []complex128, decryptor *rlwe.Decryptor, encoder *ckks.Encoder) (valuesTest []complex128) {
@@ -248,39 +105,6 @@ func printDebug(params ckks.Parameters, ciphertext *rlwe.Ciphertext, valuesWant 
 	fmt.Println()
 
 	return
-}
-
-func RandomStringInts(m int, alphabetSize int) []int {
-	s := make([]int, m)
-	for i := 0; i < m; i++ {
-		s[i] = rand.Intn(alphabetSize)
-	}
-	return s
-}
-
-func RandomSet(n int, m int, alphabetSize int) [][]int {
-	targets := make([][]int, n)
-	for i := 0; i < n; i++ {
-		targets[i] = RandomStringInts(m, alphabetSize)
-	}
-	return targets
-}
-
-func RandomSetMatch(query []int, n int, alphabetSize int) [][]int {
-	m := len(query)
-	targets := make([][]int, n)
-
-	for i := 0; i < n; i++ {
-		targets[i] = RandomStringInts(m, alphabetSize)
-	}
-
-	if n > 0 {
-		match := make([]int, m)
-		copy(match, query)
-		targets[0] = match
-	}
-
-	return targets
 }
 
 // func PrintDelta(dt *DeltaTable, ct *rlwe.Ciphertext, encoder *ckks.Encoder, decryptor *rlwe.Decryptor) error {

@@ -1,7 +1,7 @@
-package main
+package dp_sim
 
 import (
-	he "banded_dp/he_module"
+	he "banded_dp/he"
 
 	"github.com/tuneinsight/lattigo/v6/circuits/ckks/polynomial"
 	"github.com/tuneinsight/lattigo/v6/core/rlwe"

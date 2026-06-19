@@ -2,11 +2,15 @@
 
 ### Go version
 
-`go version go1.23.3 linux/amd64`
+```
+go version go1.23.3 linux/amd64
+```
 
 ### Project folder
 
-`./lattigo/examples/singleparty/ckks_bootstrapping/slim`
+```
+./lattigo/examples/singleparty/ckks_bootstrapping/slim
+```
 
 가끔 내부 module을 수정해야 할 때가 있어서, lattigo 폴더를 통째로 넣어놨습니다.
 해당 폴더에서 아래 명령어를 실행하면 코드가 돌아갑니다.
@@ -17,61 +21,168 @@ go run .
 
 ---
 
----
+## Main1 : Enc / Dec / Print 함수 만들기
 
-## Setup3 : bootstrapping
+### 1. 폴더 구조 변경
 
-> **이번 setup은 부트스트래핑을 테스트하는 방법이다.**
+```
+slim/
+├── dp/
+│   ├── dp_ideal/
+│   └── dp_sim/
+│       ├── DPtable.go
+│       ├── equal.go
+│       └── pack.go
+├── he/
+│   ├── btp.go
+│   ├── context.go
+│   └── poly.go
+├── test/
+│   ├── dp/pack_test.go
+│   └── he/he_test.go
+├── util/
+│   ├── debug.go
+│   ├── print.go
+│   └── sampling.go
+├── go.mod
+├── go.sum
+├── main_test.go
+└── main.go
+```
 
-필자의 경우 파라미터 셋업 이후 부트스트래핑을 먼저 테스트한다.
-실수 연산을 위해서도 부트스트래핑 정밀도를 조절하는 게 우선이다.
+1. 이름이 맛이 없어서 `dp_module_ideal`, `dp_module_sim`, `he_module` 을 각각 `dp_ideal`, `dp_sim`, `he` 로 변경함.
+2. `dp_ideal` 과 `dp_sim` 을 `dp` 폴더에 넣었음. 이후 브랜치에서 설명할 예정.
+3. `he/util_poly.go` 를 `he/util.go` 로 이름 변경.
+4. `he` 에 있던 `debug.go` 를 `util` 폴더에 집어넣었고, `he_test.go` 를 `test/he` 에 집어넣었음.
+5. `pack.go`, `print.go`, `sampling.go` 는 이번 브랜치에서 추가되는 것들.
 
-이 경우, 내가 원하는 정밀도에 대해 **얼마만큼의 레벨을 쓸 수 있는지** 파악하는 게 우선이기도 하다.
-(부트스트랩에 필요한 레벨을 조절해가면서 정밀도를 조절할 수 있으므로.)
+### 2. util/sampling.go
 
-이산 CKKS에 대해서도 부트스트래핑 디버깅을 먼저 한다.
-이산 부트스트래핑의 경우 라이브러리로 만들어진 게 아직 없어서,
-항상 직접 작성해서 커스텀해야 하는 부분도 있다.
+알고리즘을 짜기 전에 값을 암호화해야 하니까 샘플링하는 함수를 작성했음.
+기존에 작성되었던 것들이 있어서, 주석이랑 이름 등만 변경하였음.
 
----
+```go
+func SampleStringIntMany(N int, m int, sz int) [][]int {
+	valuesArr := make([][]int, N)
+	for i := 0; i < N; i++ {
+		valuesArr[i] = SampleStringInts(m, sz)
+	}
+	return valuesArr
+}
+```
 
-### 1. discrete 용으로 파라미터 변경하기
+실제로 사용되는 함수는 위에 있는 거로, 길이 `m` 인 string을 `N` 개만큼 sampling 하며 각 문자는 `[0, sz)` 사이에서 sampling 됨.
 
-`context.go`의 `Context`에:
+### 3. dp/dp_sim/pack.go
 
-- 필요한 추가 변수 추가
-- context 파라미터를 **discrete CKKS 용으로 변경**
+이제 sampling 된 string 들을 암호화하고 복호화할 함수를 `pack.go` 에 만들 예정.
 
-파라미터가 어떻게 변경되었는지 체크하길 바란다.
+```go
+type StrCipher struct {
+	Length int
+	Cipher []*rlwe.Ciphertext
+}
+```
 
----
+일단 Go는 클래스가 없으므로 깔쌈하게 구조체 선언. 이름은 아무렇게나 지었음.
+`StrCipher` 안의 `Cipher` 에서 암호문들을 저장할 거임.
 
-### 2. bootstrapping 함수 작성
+자 이제 `StrEncrypt` 와 `StrDecrypt` 라는 함수를 `StrCipher` 안의 멤버 함수로 넣어주고 끝내자.
+얘네는 `[][]int` 배열과 `[]*rlwe.Ciphertext` 로 암호화와 복호화를 수행할 거임.
 
-- `he_module/btp.go` — 부트스트래핑 함수가 작성되어 있다.
-- `he_module/util_poly` — 이산 부트스트래핑이 필요로 하는 유틸성 모듈을 작성해두었다.
+이 프로젝트의 경우, 길이 `m` 의 string을 `N` 개 처리할 건데,
+`string[N][m]` 이 이렇게 저장되어 있고,
+`N` = 암호문의 slot 갯수가 되게끔 setting 해서
+`m` 개의 암호문에 `N` 개의 string이 담길 예정.
 
----
+> 즉, `i` 번째 암호문의 `j` 번째 slot에는 `string[j][i]` 의 정수값이 저장됨.
 
-### 3. bootstrapping test 함수 작성 및 test
+### 4. util/print.go
 
-`he_module/he_test.go`에서 이산 부트스트래핑을 테스트한다.
+이제 string들을 print하는 함수를 하나 만들어준다.
+string 갯수가 워낙 많기 때문에, `0`, `1` 그리고 `N-1` 번지만 출력해준다.
+`tag` 를 달아서 `"uint8"` 이면 정수 그대로 출력하고, `"str"` 이면 string 값으로 출력된다.
 
-이산 부트스트래핑은 **노이즈를 제거하는 능력**을 가지고 있다.
-이 능력을 알아보기 위해 디버깅용 함수를 추가한다.
-이 함수는 실제 디버깅에서 자주 쓸 함수이며, 이름은 **`printDebug`** 이다.
+```go
+func PrintString(strpt [][]int, tag string) {
 
-![alt text](image-3.png)
+	// strpt : N x m
+	m := len(strpt[0])
+	N := len(strpt)
+	for i := 0; i < 2; i++ {
+		fmt.Printf("str[%d] : ", i)
+		for j := 0; j < m; j++ {
+			if tag == "uint8" {
+				fmt.Print(strpt[i][j])
+				fmt.Print(" ")
+			} else if tag == "str" {
+				fmt.Print(string(strpt[i][j]))
+			}
+		}
+		fmt.Println()
+	}
+	fmt.Println("......")
+	for i := N - 1; i < N; i++ {
+		fmt.Printf("str[%d] : ", i)
+		for j := 0; j < m; j++ {
+			if tag == "uint8" {
+				fmt.Print(strpt[i][j])
+				fmt.Print(" ")
+			} else if tag == "str" {
+				fmt.Print(string(strpt[i][j]))
+			}
+		}
+		fmt.Println()
+	}
+}
+```
 
-먼저, 노이즈 제거 능력을 확인하기 위해 **노이즈를 추가하는 함수**를 만들어주자. (`printDebug_withNoise`)
-이 함수는 테스트용으로만 쓰고 버릴 예정이다.
+실제 디버깅할 때는 복호화를 해서 값을 봐야 하는 경우가 많기 때문에,
+복호화 + 출력까지 되는 함수를 추가로 만들어준다.
 
-이제 `debug.go` 파일을 만들고, 여기에 `printDebug` 함수를 추가해주자.
-이 함수는 **암호문을 복호화한 평문의 오차를 계산하여 출력**한다.
+```go
+func StrDecryptAndPrint(cc he.Context, strct dp.StrCipher, tag string) {
+	PrintString(strct.StrDecrypt(cc), tag)
+}
+```
 
-오차 계산 방식은 이렇다:
-<img width="715" height="416" alt="image" src="https://github.com/user-attachments/assets/0fc267f3-94e2-40dd-bc5d-ad5682bad990" />
+### 5. test 하기
 
-- 복호화된 각 데이터와, 그에 **가장 가까운 정수**와의 오차를 log 수준으로 비교한다.
-- 이 거리는 **L2 norm**, 즉 `√(실수부² + 허수부²)`로 계산한다.
-- 그다음 **슬롯당 평균 오차와 최대 오차**를 계산하여 출력한다.
+```go
+LogN := 13
+
+var cc he.Context
+fmt.Print("Generate Context... ")
+cc.GenContext(LogN, 10, 4, 1)
+fmt.Println("Done!")
+
+str_len := 8
+char_size := 127
+
+var pack_ct dp.StrCipher
+pack_ct.Length = str_len
+
+strArr_want := util.SampleStringIntMany(cc.Params.MaxSlots(), str_len, char_size)
+util.PrintString(strArr_want, "uint8")
+
+pack_ct.StrEncrypt(cc, strArr_want)
+
+util.StrDecryptAndPrint(cc, pack_ct, "uint8")
+
+strArr_test := pack_ct.StrDecrypt(cc)
+
+equality_test(strArr_want, strArr_test)
+```
+
+일단 `logN = 16` 이 표준 파라미터지만, 기다리다 지치므로 test는 `logN = 13` 으로 실행해준다.
+그리고 context 생성해주고, 문자열 길이 (`str_len = m`), 문자 공간의 크기 (`char_size`) 설정해 둔 다음에
+만들어진 평문과 암복호화된 평문이 서로 일치하는지 test해주면 끝.
+
+전체 코드는 `test/dp/pack_test.go` 에 있다.
+
+### 6. Appendix
+
+원래 이 정도까지 폴더 나누고, 함수 쪼개고 test 함수도 따로 다 빼서 하진 않는데,
+이 기록은 FHE 딸수들이 보는 것이기 때문에 FM으로 진행한다.
+여러분들도 익숙해지면 가라를 섞어서 코드 짜길 바란다...
+ 
