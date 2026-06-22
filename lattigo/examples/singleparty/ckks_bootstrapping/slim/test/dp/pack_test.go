@@ -1,7 +1,6 @@
 package main
 
 import (
-	dp "banded_dp/dp/dp_sim"
 	he "banded_dp/he"
 	util "banded_dp/util"
 	"flag"
@@ -25,13 +24,13 @@ func Test_pack(t *testing.T) {
 	char_size := 127
 
 	fmt.Println("Packing Test... ")
-	var pack_ct dp.StrCipher
+	var pack_ct he.StrCipher
 	pack_ct.Length = str_len
 
 	strArr_want := util.SampleStringIntMany(cc.Params.MaxSlots(), str_len, char_size)
 	util.PrintString(strArr_want, "uint8")
 
-	pack_ct.StrEncrypt(cc, strArr_want)
+	pack_ct.StrEncrypt(cc, char_size, cc.Exp_lv, strArr_want)
 
 	util.StrDecryptAndPrint(cc, pack_ct, "uint8")
 

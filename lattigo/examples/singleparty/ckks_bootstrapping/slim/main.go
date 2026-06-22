@@ -33,12 +33,14 @@
 package main
 
 import (
+	"banded_dp/debug"
 	dp "banded_dp/dp/dp_sim"
 	he "banded_dp/he"
 	util "banded_dp/util"
 	"flag"
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/tuneinsight/lattigo/v6/core/rlwe"
 	"github.com/tuneinsight/lattigo/v6/schemes/ckks"
@@ -52,7 +54,7 @@ func main() {
 
 	// Default LogN, which with the following defined parameters
 	// provides a security of 128-bit.
-	LogN := 13
+	LogN := 16
 
 	if *flagShort {
 		LogN -= 3
@@ -64,16 +66,22 @@ func main() {
 	fmt.Println("Done!")
 
 	str_len := 8
-	char_size := 127
+	char_size := 128
 
 	fmt.Println("Packing Test... ")
-	var pack_ct dp.StrCipher
+	var pack_ct he.StrCipher
 	pack_ct.Length = str_len
 
 	strArr := util.SampleStringIntMany(cc.Params.MaxSlots(), str_len, char_size)
 	util.PrintString(strArr, "uint8")
 
-	pack_ct.StrEncrypt(cc, strArr)
+	pack_ct.StrEncrypt(cc, char_size, cc.Exp_lv, strArr)
+	fmt.Println(pack_ct.Cipher[0].Level())
+	eq_time := time.Now()
+	ct, _ := dp.EvalEQ_exp(cc, char_size, 0, pack_ct.Cipher[0], pack_ct.Cipher[1])
+	fmt.Println(ct.Level())
+	fmt.Println("eq time : ", time.Since(eq_time))
+	debug.PrintDebug(cc.Params, ct, he.DEC(cc, ct), cc.Decryptor, cc.Encoder)
 
 	util.StrDecryptAndPrint(cc, pack_ct, "uint8")
 }

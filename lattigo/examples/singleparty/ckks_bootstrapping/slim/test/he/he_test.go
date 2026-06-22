@@ -1,8 +1,8 @@
 package main
 
 import (
+	"banded_dp/debug"
 	he "banded_dp/he"
-	util "banded_dp/util"
 	"flag"
 	"fmt"
 	"math"
@@ -80,7 +80,7 @@ func Test_diBtp(t *testing.T) {
 	// Decrypt, print and compare with the plaintext values
 	fmt.Println()
 	fmt.Println("Precision of ciphertext vs. Bootstrap(ciphertext)")
-	util.PrintDebug(params, ciphertext, valuesTest, decryptor, encoder)
+	debug.PrintNoise(params, ciphertext, valuesTest, decryptor, encoder)
 }
 
 func printDebug_with_Noise(params ckks.Parameters, ciphertext *rlwe.Ciphertext, valuesWant []complex128, decryptor *rlwe.Decryptor, encoder *ckks.Encoder) (valuesTest []complex128) {

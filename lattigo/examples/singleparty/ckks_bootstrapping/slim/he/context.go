@@ -22,6 +22,7 @@ type Context struct {
 	PolyEval  *polynomial.Evaluator
 	Min_lv    int
 	Avail_lv  int
+	Exp_lv    int
 	Max_lv    int
 	LogB      int
 	H         int
@@ -69,6 +70,7 @@ func (cc *Context) GenContext(logN int, Avail_lv int, LogB int, H int) {
 	LogQ = append(LogQ, qiCircuitSlots...)
 	max_lv := len(LogQ) - 1
 	LogQ = append(LogQ, qiLookUpTable...)
+	exp_lv := len(LogQ) - 1
 	LogQ = append(LogQ, qiEvalMod...)
 	LogQ = append(LogQ, qiCoeffsToSlots...)
 
@@ -165,6 +167,7 @@ func (cc *Context) GenContext(logN int, Avail_lv int, LogB int, H int) {
 	cc.Decryptor = Decryptor
 	cc.Min_lv = min_lv
 	cc.Avail_lv = Avail_lv
+	cc.Exp_lv = exp_lv
 	cc.Max_lv = max_lv
 	cc.Eval = Eval
 	cc.LogB = LogB

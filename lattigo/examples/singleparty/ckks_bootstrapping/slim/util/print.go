@@ -1,7 +1,6 @@
 package util
 
 import (
-	dp "banded_dp/dp/dp_sim"
 	he "banded_dp/he"
 	"fmt"
 )
@@ -44,6 +43,6 @@ func PrintString(strpt [][]int, tag string) {
 // StrCipher 객체를 복호화하고 출력함.
 // tag = "uint8" 이면 숫자로 출력.
 // tag = "str" 이면 string으로 출력.
-func StrDecryptAndPrint(cc he.Context, strct dp.StrCipher, tag string) {
+func StrDecryptAndPrint(cc he.Context, strct he.StrCipher, tag string) {
 	PrintString(strct.StrDecrypt(cc), tag)
 }
