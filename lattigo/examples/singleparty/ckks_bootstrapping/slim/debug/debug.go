@@ -15,7 +15,7 @@ type DebugBox struct {
 // global
 var Debug = DebugBox{
 	// 0 : cipher, 1 : plain, 2 : validation
-	EQ: 2,
+	EQ: 0,
 }
 
 func PrintDebug(params ckks.Parameters, ciphertext *rlwe.Ciphertext, valuesWant []complex128, decryptor *rlwe.Decryptor, encoder *ckks.Encoder) (valuesTest []complex128) {

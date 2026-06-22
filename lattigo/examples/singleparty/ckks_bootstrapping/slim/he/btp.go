@@ -22,7 +22,7 @@ func DiBootstrapMany(cc Context, ciphertext *rlwe.Ciphertext, LookUpTable func(i
 	params := cc.Params
 	eval := cc.Eval
 	base := 1 << cc.LogB
-	hermite_order := cc.H
+	hermite_order := cc.H_btp
 	polyeval := cc.PolyEval
 
 	if ciphertext, err = eval.SlotsToCoeffs(ciphertext, nil); err != nil {

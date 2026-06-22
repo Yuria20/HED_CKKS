@@ -35,9 +35,10 @@ func RootToByte(z complex128, mod int) int {
 	return x
 }
 
-func (strct *StrCipher) StrEncrypt(cc Context, sz int, level int, strpt [][]int) {
+func (strct *StrCipher) StrEncrypt(cc Context, level int, strpt [][]int) {
 
 	params := cc.Params
+	sz := cc.C_size
 
 	// strpt : N x m
 	m := len(strpt[0])

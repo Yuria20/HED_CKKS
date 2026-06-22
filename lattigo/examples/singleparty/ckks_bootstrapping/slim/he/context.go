@@ -25,7 +25,8 @@ type Context struct {
 	Exp_lv    int
 	Max_lv    int
 	LogB      int
-	H         int
+	H_btp     int
+	C_size    int
 }
 
 func (cc *Context) GenContext(logN int, Avail_lv int, LogB int, H int) {
@@ -171,6 +172,6 @@ func (cc *Context) GenContext(logN int, Avail_lv int, LogB int, H int) {
 	cc.Max_lv = max_lv
 	cc.Eval = Eval
 	cc.LogB = LogB
-	cc.H = H
+	cc.H_btp = H
 	cc.PolyEval = polyEval
 }

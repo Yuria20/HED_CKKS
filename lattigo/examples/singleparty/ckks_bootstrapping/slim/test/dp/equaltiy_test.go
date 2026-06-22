@@ -63,23 +63,23 @@ func Test_equality(t *testing.T) {
 
 	var cc he.Context
 	fmt.Print("Generate Context... ")
-	cc.GenContext(LogN, 10, 4, 1)
+	cc.GenContext(LogN, 5, 4, 1)
 	fmt.Println("Done!")
 
 	str_len := 8
-	char_size := 128
+	cc.C_size = 128
 
 	fmt.Println("Packing Test... ")
 	var pack_ct he.StrCipher
 	pack_ct.Length = str_len
 
-	strArr := util.SampleStringIntMany(cc.Params.MaxSlots(), str_len, char_size)
+	strArr := util.SampleStringIntMany(cc.Params.MaxSlots(), str_len, cc.C_size)
 	util.PrintString(strArr, "uint8")
 
-	pack_ct.StrEncrypt(cc, char_size, cc.Exp_lv, strArr)
+	pack_ct.StrEncrypt(cc, cc.Exp_lv, strArr)
 	fmt.Println(pack_ct.Cipher[0].Level())
 	eq_time := time.Now()
-	ct, _ := dp.EvalEquality(cc, char_size, 0, pack_ct.Cipher[0], pack_ct.Cipher[1])
+	ct, _ := dp.EvalEQ_exp(cc, 0, pack_ct.Cipher[0], pack_ct.Cipher[1])
 	fmt.Println(ct.Level())
 	fmt.Println("eq time : ", time.Since(eq_time))
 	debug.PrintNoise(cc.Params, ct, he.DEC(cc, ct), cc.Decryptor, cc.Encoder)

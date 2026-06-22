@@ -7,10 +7,11 @@ import (
 	"github.com/tuneinsight/lattigo/v6/core/rlwe"
 )
 
-func EvalEQ_exp(cc he.Context, char_size int, hermite int, ctxt1 *rlwe.Ciphertext, ctxt2 *rlwe.Ciphertext) (*rlwe.Ciphertext, error) {
+func EvalEQ_exp(cc he.Context, hermite int, ctxt1 *rlwe.Ciphertext, ctxt2 *rlwe.Ciphertext) (*rlwe.Ciphertext, error) {
+	sz := cc.C_size
 
 	in_lv := min(ctxt1.Level(), ctxt2.Level())
-	out_lv := in_lv - (int(math.Ceil(math.Log2(float64(char_size)))) + 1)
+	out_lv := in_lv - (int(math.Ceil(math.Log2(float64(sz)))) + 1)
 
 	values1 := he.DEC(cc, ctxt1)
 	values2 := he.DEC(cc, ctxt2)
@@ -19,8 +20,8 @@ func EvalEQ_exp(cc he.Context, char_size int, hermite int, ctxt1 *rlwe.Ciphertex
 
 	for i := 0; i < len(values_want); i++ {
 		// round
-		val1_int := he.RootToByte(values1[i], char_size)
-		val2_int := he.RootToByte(values2[i], char_size)
+		val1_int := he.RootToByte(values1[i], sz)
+		val2_int := he.RootToByte(values2[i], sz)
 
 		// eq
 		val_int := val1_int - val2_int

@@ -13,11 +13,12 @@ import (
 // Output : 출력 암호문은 x==y 이면 1을 그렇지 않으면 0이 저장됩니다.
 // description : 1. Compute exp(2pi*i*(x-y)/128) : ctxt2를 conjugation 한 뒤, ctxt1과 곱합니다.
 //  2. Hermite Interpoation : equality Look-up Table을 평가합니다.
-func EvalEQ_exp(cc he.Context, char_size int, hermite int, ciphertext1 *rlwe.Ciphertext, ciphertext2 *rlwe.Ciphertext) (*rlwe.Ciphertext, error) {
+func EvalEQ_exp(cc he.Context, hermite int, ciphertext1 *rlwe.Ciphertext, ciphertext2 *rlwe.Ciphertext) (*rlwe.Ciphertext, error) {
 
 	eval := cc.Eval
 	params := cc.Params
 	poly_eval := cc.PolyEval
+	sz := cc.C_size
 
 	eq := func(x int) int {
 		if x == 0 {
@@ -53,7 +54,7 @@ func EvalEQ_exp(cc he.Context, char_size int, hermite int, ciphertext1 *rlwe.Cip
 	var f_coeffs bignum.Polynomial
 
 	// hermite order :
-	f_coeffs = bignum.NewPolynomial(0, he.HermiteInterpolation(char_size, hermite, eq), nil)
+	f_coeffs = bignum.NewPolynomial(0, he.HermiteInterpolation(sz, hermite, eq), nil)
 
 	var poly_f polynomial.Polynomial
 	poly_f = polynomial.NewPolynomial(f_coeffs)

@@ -21,16 +21,16 @@ func Test_pack(t *testing.T) {
 	fmt.Println("Done!")
 
 	str_len := 8
-	char_size := 127
+	cc.C_size = 128
 
 	fmt.Println("Packing Test... ")
 	var pack_ct he.StrCipher
 	pack_ct.Length = str_len
 
-	strArr_want := util.SampleStringIntMany(cc.Params.MaxSlots(), str_len, char_size)
+	strArr_want := util.SampleStringIntMany(cc.Params.MaxSlots(), str_len, cc.C_size)
 	util.PrintString(strArr_want, "uint8")
 
-	pack_ct.StrEncrypt(cc, char_size, cc.Exp_lv, strArr_want)
+	pack_ct.StrEncrypt(cc, cc.Exp_lv, strArr_want)
 
 	util.StrDecryptAndPrint(cc, pack_ct, "uint8")
 
