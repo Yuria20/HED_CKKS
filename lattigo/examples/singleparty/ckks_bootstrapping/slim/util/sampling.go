@@ -15,6 +15,7 @@ func SampleStringInts(m int, sz int) []int {
 	s := make([]int, m)
 	for i := 0; i < m; i++ {
 		s[i] = SampleUint8(sz)
+		//s[i] = i //SampleUint8(sz)
 	}
 	return s
 }
@@ -25,6 +26,20 @@ func SampleStringIntMany(N int, m int, sz int) [][]int {
 	valuesArr := make([][]int, N)
 	for i := 0; i < N; i++ {
 		valuesArr[i] = SampleStringInts(m, sz)
+	}
+	return valuesArr
+}
+
+func ReverseString(vals [][]int) [][]int {
+	N := len(vals)
+	m := len(vals[0])
+
+	valuesArr := make([][]int, N)
+	for i := 0; i < N; i++ {
+		valuesArr[i] = make([]int, m)
+		for j := 1; j <= m; j++ {
+			valuesArr[i][j-1] = vals[i][m-j]
+		}
 	}
 	return valuesArr
 }

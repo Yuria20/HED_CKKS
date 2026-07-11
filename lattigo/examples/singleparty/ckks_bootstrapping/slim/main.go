@@ -33,14 +33,13 @@
 package main
 
 import (
-	"banded_dp/debug"
-	dp "banded_dp/dp"
+	"banded_dp/dp"
+	"banded_dp/dp/dp_ideal"
 	he "banded_dp/he"
 	util "banded_dp/util"
 	"flag"
 	"fmt"
 	"math"
-	"time"
 
 	"github.com/tuneinsight/lattigo/v6/core/rlwe"
 	"github.com/tuneinsight/lattigo/v6/schemes/ckks"
@@ -54,7 +53,7 @@ func main() {
 
 	// Default LogN, which with the following defined parameters
 	// provides a security of 128-bit.
-	LogN := 16
+	LogN := 13
 
 	if *flagShort {
 		LogN -= 3
@@ -62,27 +61,60 @@ func main() {
 
 	var cc he.Context
 	fmt.Print("Generate Context... ")
-	cc.GenContext(LogN, 5, 4, 1)
-	fmt.Println("Done!")
 
-	str_len := 8
-	cc.C_size = 127
+	for i := 7; i <= 8; i++ {
+		cc.M = (1 << i)
+		str_len := cc.M
+		// [cpx2int] + (eval depth) * (# eval) + (eq depth)
+		cc.GenContext(LogN, 1+2*5+2, 4, 1, str_len)
+		fmt.Println("Done!")
 
-	fmt.Println("Packing Test... ")
-	var pack_ct he.StrCipher
-	pack_ct.Length = str_len
+		cc.C_size = 128
+		cc.Batch_size = cc.Slot_size / cc.M
 
-	strArr := util.SampleStringIntMany(cc.Params.MaxSlots(), str_len, cc.C_size)
-	util.PrintString(strArr, "uint8")
+		for iter := 0; iter < 1; iter++ {
+			var ct_A he.StrCipher
+			ct_A.Length = str_len
+			str_A := util.SampleStringIntMany(cc.Batch_size, str_len, cc.C_size)
+			//str_A[0] = []int{109, 98, 77, 44, 77, 25, 58, 9}
+			util.PrintString(str_A, "uint8")
+			ct_A.StrEncrypt(cc, cc.Exp_lv, str_A)
 
-	pack_ct.StrEncrypt(cc, cc.Exp_lv, strArr)
-	fmt.Println(pack_ct.Cipher[0].Level())
-	eq_time := time.Now()
-	E := dp.GenEqTable(cc, pack_ct, pack_ct)
-	fmt.Println("eq time : ", time.Since(eq_time))
-	debug.PrintDebug(cc.Params, E.Deltas[0][0], he.DEC(cc, E.Deltas[0][0]), cc.Decryptor, cc.Encoder)
+			// Many 해당하는 string을 미리 reverse 시킨 후 암호화 합니다.
+			var ct_B he.StrCipher
+			ct_B.Length = str_len
+			str_B := util.SampleStringIntMany(cc.Batch_size, str_len, cc.C_size)
+			//str_B[0] = []int{91, 45, 103, 78, 72, 77, 25, 0}
+			rev_str_B := util.ReverseString(str_B)
+			//fmt.Println(rev_str_B[0])
+			util.PrintString(str_B, "uint8")
+			ct_B.StrEncrypt(cc, cc.Exp_lv, rev_str_B)
 
-	util.StrDecryptAndPrint(cc, pack_ct, "uint8")
+			var st dp.DPState
+			st.GenDPstate(cc, ct_A, ct_B)
+			st.ComputeDpTable(cc)
+
+			res_ideal := make([]int, cc.Batch_size)
+			for k := 0; k < cc.Batch_size; k++ {
+				res_ideal[k] = dp_ideal.LevenshteinDistance(str_A[k], str_B[k])
+			}
+
+			res_sim := st.Res_sim
+			fmt.Println(res_ideal)
+			fmt.Println(res_sim)
+
+			for k := 0; k < cc.Batch_size; k++ {
+				if res_ideal[k] != res_sim[k] {
+					fmt.Println("k = ", k)
+					fmt.Println(str_A[k])
+					fmt.Println(str_B[k])
+
+					break
+				}
+			}
+			fmt.Println("Pass!")
+		}
+	}
 }
 
 func printDebug(params ckks.Parameters, ciphertext *rlwe.Ciphertext, valuesWant []complex128, decryptor *rlwe.Decryptor, encoder *ckks.Encoder) (valuesTest []complex128) {

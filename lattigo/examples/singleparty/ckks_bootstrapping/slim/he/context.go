@@ -14,25 +14,28 @@ import (
 )
 
 type Context struct {
-	Params    ckks.Parameters
-	Encoder   *ckks.Encoder
-	Encryptor *rlwe.Encryptor
-	Decryptor *rlwe.Decryptor
-	Eval      *bootstrapping.Evaluator
-	PolyEval  *polynomial.Evaluator
-	Min_lv    int
-	Avail_lv  int
-	Exp_lv    int
-	Max_lv    int
-	LogB      int
-	H_btp     int
-	C_size    int
+	Params     ckks.Parameters
+	Encoder    *ckks.Encoder
+	Encryptor  *rlwe.Encryptor
+	Decryptor  *rlwe.Decryptor
+	Eval       *bootstrapping.Evaluator
+	PolyEval   *polynomial.Evaluator
+	Min_lv     int // minimum circuit depth
+	Avail_lv   int // available circuit depth
+	Exp_lv     int // circuit depth after evalEXP
+	Max_lv     int // maximum circuit depth
+	LogB       int // log base
+	H_btp      int // hermite order
+	C_size     int // character size
+	M          int // length of string
+	Slot_size  int // number of slot
+	Batch_size int // number of batch
 }
 
-func (cc *Context) GenContext(logN int, Avail_lv int, LogB int, H int) {
+func (cc *Context) GenContext(logN int, Avail_lv int, LogB int, H int, str_len int) {
 	LogN := logN
-
-	LogDefaultScale := 50
+	cc.M = str_len
+	LogDefaultScale := 45
 	sz := LogDefaultScale
 
 	q0 := []int{sz}                      // ScaleDown & ModUp
@@ -160,6 +163,18 @@ func (cc *Context) GenContext(logN int, Avail_lv int, LogB int, H int) {
 		panic(err)
 	}
 
+	extraGalEls := make([]uint64, str_len+1)
+	for i := 0; i < str_len; i++ {
+		//fmt.Println(i * cc.Slot_size / cc.M)
+		extraGalEls[i] = btpParams.ResidualParameters.GaloisElement(i * params.MaxSlots() / cc.M)
+	}
+	extraGalEls[str_len] = btpParams.ResidualParameters.GaloisElement(-1 * cc.Slot_size / cc.M)
+
+	newGalKeys := kgen.GenGaloisKeysNew(extraGalEls, sk)
+	for _, gk := range newGalKeys {
+		Eval.MemEvaluationKeySet.GaloisKeys[gk.GaloisElement] = gk
+	}
+
 	polyEval := polynomial.NewEvaluator(params, Eval.Evaluator)
 
 	cc.Params = params
@@ -174,4 +189,5 @@ func (cc *Context) GenContext(logN int, Avail_lv int, LogB int, H int) {
 	cc.LogB = LogB
 	cc.H_btp = H
 	cc.PolyEval = polyEval
+	cc.Slot_size = params.MaxSlots()
 }

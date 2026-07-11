@@ -32,7 +32,7 @@ func Test_diBtp(t *testing.T) {
 	LogN := 16
 
 	var cc he.Context
-	cc.GenContext(LogN, 1, 4, 1)
+	cc.GenContext(LogN, 1, 4, 1, 1)
 
 	params := cc.Params
 	encoder := cc.Encoder

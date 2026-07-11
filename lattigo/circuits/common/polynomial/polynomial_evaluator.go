@@ -90,6 +90,84 @@ func (eval Evaluator[T]) Evaluate(input interface{}, p interface{}, targetScale 
 	return opOut, err
 }
 
+func (eval Evaluator[T]) EvaluateMultiPoly(input interface{}, p_list []interface{}, targetScale rlwe.Scale, levelsConsumedPerRescaling int, SimEval SimEvaluator) (opOut []*rlwe.Ciphertext, err error) {
+
+	//basis_start := time.Now()
+
+	polyVec := make([]PolynomialVector, len(p_list))
+	for i := 0; i < len(p_list); i++ {
+		switch p := p_list[i].(type) {
+		case bignum.Polynomial:
+			polyVec[i] = PolynomialVector{Value: []Polynomial{{Polynomial: p, MaxDeg: p.Degree(), Lead: true, Lazy: false}}}
+		case Polynomial:
+			polyVec[i] = PolynomialVector{Value: []Polynomial{p}}
+		case PolynomialVector:
+			polyVec[i] = p
+		default:
+			return nil, fmt.Errorf("cannot Polynomial: invalid polynomial type, must be either bignum.Polynomial, polynomial.Polynomial or polynomial.PolynomialVector, but is %T", p)
+		}
+	}
+
+	var powerbasis PowerBasis
+	switch input := input.(type) {
+	case *rlwe.Ciphertext:
+		powerbasis = NewPowerBasis(input, polyVec[0].Value[0].Basis)
+	case PowerBasis:
+		if input.Value[1] == nil {
+			return nil, fmt.Errorf("cannot evaluatePolyVector: given PowerBasis.Value[1] is empty")
+		}
+		powerbasis = input
+	default:
+		return nil, fmt.Errorf("cannot evaluatePolyVector: invalid input, must be either *rlwe.Ciphertext or *PowerBasis")
+	}
+
+	if level, depth := powerbasis.Value[1].Level(), levelsConsumedPerRescaling*polyVec[0].Value[0].Depth(); level < depth {
+		return nil, fmt.Errorf("%d levels < %d log(d) -> cannot evaluate poly", level, depth)
+	}
+
+	/* #nosec G115 -- Degree cannot be negative */
+	logDegree := bits.Len64(uint64(polyVec[0].Value[0].Degree()))
+	logSplit := bignum.OptimalSplit(logDegree)
+	//logSplit := logDegree
+	//fmt.Println(logSplit, logDegree)
+
+	var odd, even = false, false
+	for _, p := range polyVec[0].Value {
+		odd, even = odd || p.IsOdd, even || p.IsEven
+	}
+
+	// Computes all the powers of two with relinearization
+	// This will recursively compute and store all powers of two up to 2^logDegree
+	if err = powerbasis.GenPower(1<<(logDegree-1), false, eval); err != nil {
+		return nil, err
+	}
+
+	// Computes the intermediate powers, starting from the largest, without relinearization if possible
+	for i := (1 << logSplit) - 1; i > 2; i-- {
+		if !(even || odd) || (i&1 == 0 && even) || (i&1 == 1 && odd) {
+			if err = powerbasis.GenPower(i, polyVec[0].Value[0].Lazy, eval); err != nil {
+				return nil, err
+			}
+		}
+	}
+	//basis_time := time.Since(basis_start)
+	//fmt.Println("gen basis : ", basis_time)
+
+	opOut = make([]*rlwe.Ciphertext, len(p_list))
+	for i := 0; i < len(p_list); i++ {
+		PS := polyVec[i].PatersonStockmeyerPolynomial(*eval.GetRLWEParameters(), powerbasis.Value[1].Level(), powerbasis.Value[1].Scale, targetScale, SimEval)
+
+		//poly_start := time.Now()
+		if opOut[i], err = eval.EvaluatePatersonStockmeyerPolynomialVector(PS, powerbasis); err != nil {
+			return nil, err
+		}
+		//poly_time := time.Since(poly_start)
+		//fmt.Println("eval poly : ", poly_time)
+	}
+
+	return opOut, err
+}
+
 // BabyStep is a struct storing the result of a baby-step
 // of the Paterson-Stockmeyer polynomial evaluation algorithm.
 type BabyStep struct {

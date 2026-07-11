@@ -14,6 +14,10 @@ func must(err error) {
 	}
 }
 
+func BootstrapIdeal(cc Context, ciphertext *rlwe.Ciphertext) (ct *rlwe.Ciphertext, err error) {
+	return ENC(cc, DEC(cc, ciphertext), cc.Exp_lv)
+}
+
 // DiBootstrapMany with Multiple Look-up Table Evaluation
 // 이 함수는 하나의 암호문에 대해서 다수의 Look-Up Table을 평가하여 출력하는 함수입니다.
 // 세부사항은 DiBootstrap 함수를 참고하세요.

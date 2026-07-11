@@ -8,7 +8,7 @@ import (
 
 type StrCipher struct {
 	Length int
-	Cipher []*rlwe.Ciphertext
+	Cipher *rlwe.Ciphertext
 }
 
 // int => root of unity
@@ -19,7 +19,7 @@ func ByteToRoot(x int, mod int) complex128 {
 	)
 }
 
-// root of unity => int
+// root ofe unity => int
 func RootToByte(z complex128, mod int) int {
 	theta := math.Atan2(imag(z), real(z)) // range: (-pi, pi]
 
@@ -41,23 +41,23 @@ func (strct *StrCipher) StrEncrypt(cc Context, level int, strpt [][]int) {
 	sz := cc.C_size
 
 	// strpt : N x m
-	m := len(strpt[0])
-	N := len(strpt)
-
+	str_len := cc.M
+	b_sz := cc.Batch_size
 	var err error
-	strct.Cipher = make([]*rlwe.Ciphertext, m)
 
-	for i := 0; i < m; i++ {
-		values := make([]complex128, params.MaxSlots())
-		for j := 0; j < N; j++ {
-			values[j] = ByteToRoot(strpt[j][i], sz)
+	values := make([]complex128, params.MaxSlots())
+	for i := 0; i < b_sz; i++ {
+		for j := 0; j < str_len; j++ {
+			//values[i*str_len+j] = complex(float64(strpt[i][j]), 0.0) //ByteToRoot(strpt[i][j], sz)
+			values[i*str_len+j] = ByteToRoot(strpt[i][j], sz)
 		}
+	}
+	values = InterLeave(values, str_len, cc.Slot_size)
+	// interleaving
 
-		strct.Cipher[i], err = ENC(cc, values, level)
-		if err != nil {
-			panic(err)
-		}
-
+	strct.Cipher, err = ENC(cc, values, level)
+	if err != nil {
+		panic(err)
 	}
 
 	return
@@ -65,24 +65,52 @@ func (strct *StrCipher) StrEncrypt(cc Context, level int, strpt [][]int) {
 
 func (strct *StrCipher) StrDecrypt(cc Context) [][]int {
 
-	params := cc.Params
+	//params := cc.Params
+
+	// strpt : N x m
+	str_len := cc.M
+	b_sz := cc.Batch_size
 
 	var strpt [][]int
-	strpt = make([][]int, params.MaxSlots())
-	for i := 0; i < params.MaxSlots(); i++ {
-		strpt[i] = make([]int, strct.Length)
+	strpt = make([][]int, b_sz)
+	for i := 0; i < b_sz; i++ {
+		strpt[i] = make([]int, str_len)
 	}
-	// strpt : N x m
-	m := len(strpt[0])
-	N := len(strpt)
 
-	for i := 0; i < m; i++ {
-		values := DEC(cc, strct.Cipher[i])
+	values := DEC(cc, strct.Cipher)
+	values = InverseInterLeave(values, str_len, cc.Slot_size)
 
-		for j := 0; j < N; j++ {
-			strpt[j][i] = int(math.Round(real(values[j])))
+	for i := 0; i < b_sz; i++ {
+		for j := 0; j < str_len; j++ {
+			strpt[i][j] = int(math.Round(real(values[i*str_len+j])))
 		}
 	}
 
 	return strpt
+}
+
+func InterLeave(vec []complex128, n int, N int) []complex128 {
+	batch := N / n
+	twistedVec := make([]complex128, N)
+
+	for i := 0; i < n; i++ {
+		for j := 0; j < batch; j++ {
+			twistedVec[i*batch+j] = vec[j*n+i]
+		}
+	}
+
+	return twistedVec
+}
+
+func InverseInterLeave(vec []complex128, n int, N int) []complex128 {
+	batch := N / n
+	InvtwistedVec := make([]complex128, N)
+
+	for i := 0; i < n; i++ {
+		for j := 0; j < batch; j++ {
+			InvtwistedVec[j*n+i] = vec[i*batch+j]
+		}
+	}
+
+	return InvtwistedVec
 }
