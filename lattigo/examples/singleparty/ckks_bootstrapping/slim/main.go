@@ -62,7 +62,7 @@ func main() {
 	var cc he.Context
 	fmt.Print("Generate Context... ")
 
-	for i := 7; i <= 8; i++ {
+	for i := 8; i <= 8; i++ {
 		cc.M = (1 << i)
 		str_len := cc.M
 		// [cpx2int] + (eval depth) * (# eval) + (eq depth)

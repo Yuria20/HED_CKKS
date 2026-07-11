@@ -104,29 +104,28 @@ func PreComputeDeltas(cc he.Context, hermite int, ctxt1 *rlwe.Ciphertext, ctxt2 
 	for i := 0; i < str_len; i++ {
 		shift_idx = append(shift_idx, i*cc.Slot_size/cc.M)
 	}
-	fmt.Println(shift_idx)
+	//fmt.Println(shift_idx)
 
 	rot_start := time.Now()
 	temp_list, err := eval.Evaluator.RotateHoistedNew(ctxt2, shift_idx)
 	if err != nil {
-		fmt.Println(err)
 		panic(err)
 	}
 	rot_time := time.Since(rot_start)
 
 	for i := 1; i <= str_len; i++ {
 		roted_list[i-1] = temp_list[(str_len-i)*cc.Slot_size/cc.M]
-		//debug.PrintDebug(cc, cc.Params, roted_list[i-1], make([]complex128, cc.Params.MaxSlots()), cc.Decryptor, cc.Encoder)
 	}
 
 	rtn_list := make([]*rlwe.Ciphertext, str_len)
 	rot_start = time.Now()
+	// conjugate : exp(y) ==> exp(-y)
+	err = eval.Conjugate(ctxt1, ctxt1)
+	if err != nil {
+		panic(err)
+	}
 	for i := 0; i < str_len; i++ {
-		//rot_start := time.Now()
 		rtn_list[i], err = EvalEQ_exp2(cc, 0, ctxt1, roted_list[i])
-		//fmt.Println(rtn_list[i].Level())
-		//fmt.Println("eq time : ", time.Since(rot_start))
-
 		if err != nil {
 			panic(nil)
 		}
@@ -135,5 +134,6 @@ func PreComputeDeltas(cc he.Context, hermite int, ctxt1 *rlwe.Ciphertext, ctxt2 
 
 	fmt.Println("rot time : ", rot_time)
 	fmt.Println("eq time : ", eq_time)
+
 	return rtn_list
 }

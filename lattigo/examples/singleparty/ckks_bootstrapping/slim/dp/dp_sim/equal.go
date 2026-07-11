@@ -77,33 +77,14 @@ func EvalEQ_exp(cc he.Context, hermite int, ciphertext1 *rlwe.Ciphertext, cipher
 func EvalEQ_exp2(cc he.Context, hermite int, ciphertext1 *rlwe.Ciphertext, ciphertext2 *rlwe.Ciphertext) (*rlwe.Ciphertext, error) {
 
 	eval := cc.Eval
-	// params := cc.Params
-	// poly_eval := cc.PolyEval
 	sz := cc.C_size
 	log_sz := int(math.Log2(float64(sz)))
-
-	// eq := func(x int) int {
-	// 	if x == 0 {
-	// 		return 1
-	// 	} else {
-	// 		return 0
-	// 	}
-	// }
 
 	var err error
 	var result *rlwe.Ciphertext
 
-	// ciphertext2 복사본
-	ct2Conj := ciphertext2.CopyNew()
-
-	// conjugate : exp(y) ==> exp(-y)
-	err = eval.Conjugate(ct2Conj, ct2Conj)
-	if err != nil {
-		panic(err)
-	}
-
 	// mult : exp(x) * exp(-y) ==> exp(x-y)
-	result, err = eval.MulRelinNew(ciphertext1, ct2Conj)
+	result, err = eval.MulRelinNew(ciphertext1, ciphertext2)
 	if err != nil {
 		panic(err)
 	}
@@ -113,8 +94,7 @@ func EvalEQ_exp2(cc he.Context, hermite int, ciphertext1 *rlwe.Ciphertext, ciphe
 		panic(err)
 	}
 
-	var powers []*rlwe.Ciphertext
-	powers = make([]*rlwe.Ciphertext, log_sz)
+	powers := make([]*rlwe.Ciphertext, log_sz)
 	powers[0] = result
 	for i := 1; i < log_sz; i++ {
 		powers[i], err = eval.MulRelinNew(powers[i-1], powers[i-1])
@@ -146,7 +126,7 @@ func EvalEQ_exp2(cc he.Context, hermite int, ciphertext1 *rlwe.Ciphertext, ciphe
 		}
 	}
 
-	result, err = eval.MulRelinNew(result, 1.0/float64(sz))
+	result, err = eval.MulRelinNew(result, -1.0/float64(sz))
 	if err != nil {
 		panic(err)
 	}
@@ -154,19 +134,6 @@ func EvalEQ_exp2(cc he.Context, hermite int, ciphertext1 *rlwe.Ciphertext, ciphe
 	if err != nil {
 		panic(err)
 	}
-
-	// var f_coeffs bignum.Polynomial
-
-	// // hermite order :
-	// f_coeffs = bignum.NewPolynomial(0, he.HermiteInterpolation(sz, hermite, eq), nil)
-
-	// var poly_f polynomial.Polynomial
-	// poly_f = polynomial.NewPolynomial(f_coeffs)
-
-	// result, err = poly_eval.Evaluate(result, poly_f, params.DefaultScale())
-	// if err != nil {
-	// 	panic(err)
-	// }
 
 	return result, err
 }
