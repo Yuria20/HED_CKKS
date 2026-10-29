@@ -56,6 +56,26 @@ func (eval Evaluator) Evaluate(ct *rlwe.Ciphertext, p interface{}, targetScale r
 	return eval.Evaluator.Evaluate(ct, phe, targetScale, levelsConsumedPerRescaling, &simEvaluator{eval.Parameters, levelsConsumedPerRescaling})
 }
 
+func (eval Evaluator) EvaluateMultiPoly(ct *rlwe.Ciphertext, p_list []interface{}, targetScale rlwe.Scale) (opOut []*rlwe.Ciphertext, err error) {
+
+	phe := make([]interface{}, len(p_list))
+	for i := 0; i < len(p_list); i++ {
+		switch p := p_list[i].(type) {
+		case Polynomial:
+			phe[i] = polynomial.Polynomial(p)
+		case PolynomialVector:
+			phe[i] = polynomial.PolynomialVector(p)
+		default:
+			phe[i] = p
+		}
+
+	}
+
+	levelsConsumedPerRescaling := eval.Parameters.LevelsConsumedPerRescaling()
+
+	return eval.Evaluator.EvaluateMultiPoly(ct, phe, targetScale, levelsConsumedPerRescaling, &simEvaluator{eval.Parameters, levelsConsumedPerRescaling})
+}
+
 // EvaluateFromPowerBasis evaluates a polynomial using the provided [polynomial.PowerBasis], holding pre-computed powers of X.
 // This method is the same as [Evaluate] except that the encrypted input is a [polynomial.PowerBasis].
 // See [Evaluate] for additional information.

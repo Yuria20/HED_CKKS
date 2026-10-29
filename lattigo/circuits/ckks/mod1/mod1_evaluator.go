@@ -143,6 +143,129 @@ func (eval Evaluator) EvaluateAndScaleNew(ct *rlwe.Ciphertext, scaling complex12
 	return res, nil
 }
 
+func (eval Evaluator) EvaluateAndScaleNew2(ct *rlwe.Ciphertext, scaling complex128, check bool) (res *rlwe.Ciphertext, err error) {
+
+	evm := eval.Parameters
+
+	if ct.Level() < evm.LevelQ {
+		return nil, fmt.Errorf("cannot Evaluate: ct.Level() < Mod1Parameters.LevelQ")
+	}
+
+	if ct.Level() > evm.LevelQ {
+		eval.DropLevel(ct, ct.Level()-evm.LevelQ)
+	}
+
+	res = ct.CopyNew()
+
+	// Normalize the modular reduction to mod by 1 (division by Q)
+	res.Scale = evm.ScalingFactor() // q/t*(x+tI) = q*(x/t + I)
+
+	// Compute the scales that the ciphertext should have before the double angle
+	// formula such that after it it has the scale it had before the polynomial
+	// evaluation
+
+	Qi := eval.GetParameters().Q()
+
+	targetScale := res.Scale
+	for i := 0; i < evm.DoubleAngle; i++ {
+		targetScale = targetScale.Mul(rlwe.NewScale(Qi[ct.Level()-evm.Mod1Poly.Depth()-evm.DoubleAngle+i+1]))
+		targetScale.Value.Sqrt(&targetScale.Value)
+	}
+
+	// Division by 1/2^r and change of variable for the Chebyshev evaluation
+	if evm.Mod1Type == CosDiscrete || evm.Mod1Type == CosContinuous {
+		offset := new(big.Float).Sub(&evm.Mod1Poly.B, &evm.Mod1Poly.A)
+
+		//fmt.Printf("offset = %f = %f - %f\n", offset, &evm.Mod1Poly.B, &evm.Mod1Poly.A)
+
+		offset.Mul(offset, new(big.Float).SetFloat64(evm.IntervalShrinkFactor()))
+		//offset.Mul(offset, new(big.Float).SetFloat64(4.0))
+
+		offset.Quo(new(big.Float).SetFloat64(-0.5), offset)
+
+		if check == false {
+			if err = eval.Add(res, offset, res); err != nil {
+				return nil, fmt.Errorf("cannot Evaluate: %w", err)
+			}
+		}
+	}
+
+	// Double angle
+	sqrt2pi := complex(evm.Sqrt2Pi, 0)
+
+	var mod1Poly bignum.Polynomial
+	if evm.Mod1InvPoly == nil {
+
+		scaling := cmplx.Pow(scaling, complex(1/evm.IntervalShrinkFactor(), 0))
+
+		mul := bignum.NewComplexMultiplier().Mul
+
+		mod1Poly = evm.Mod1Poly.Clone()
+
+		scalingPowBig := bignum.NewComplex().SetComplex128(scaling)
+
+		for i := range mod1Poly.Coeffs {
+			if mod1Poly.Coeffs[i] != nil {
+				mul(mod1Poly.Coeffs[i], scalingPowBig, mod1Poly.Coeffs[i])
+			}
+		}
+
+		sqrt2pi *= scaling
+
+	} else {
+		mod1Poly = evm.Mod1Poly
+	}
+
+	// Chebyshev evaluation
+	if res, err = eval.PolynomialEvaluator.Evaluate(res, mod1Poly, rlwe.NewScale(targetScale)); err != nil {
+		return nil, fmt.Errorf("cannot Evaluate: %w", err)
+	}
+
+	for i := 0; i < evm.DoubleAngle; i++ {
+		sqrt2pi *= sqrt2pi
+
+		if err = eval.MulRelin(res, res, res); err != nil {
+			return nil, fmt.Errorf("cannot Evaluate: %w", err)
+		}
+
+		if err = eval.Add(res, res, res); err != nil {
+			return nil, fmt.Errorf("cannot Evaluate: %w", err)
+		}
+
+		if err = eval.Add(res, -sqrt2pi, res); err != nil {
+			return nil, fmt.Errorf("cannot Evaluate: %w", err)
+		}
+
+		if err = eval.Rescale(res, res); err != nil {
+			return nil, fmt.Errorf("cannot Evaluate: %w", err)
+		}
+	}
+
+	// ArcSine
+	if evm.Mod1InvPoly != nil {
+
+		mul := bignum.NewComplexMultiplier().Mul
+
+		mod1InvPoly := evm.Mod1InvPoly.Clone()
+
+		scalingBig := bignum.NewComplex().SetComplex128(scaling)
+
+		for i := range mod1InvPoly.Coeffs {
+			if mod1InvPoly.Coeffs[i] != nil {
+				mul(mod1InvPoly.Coeffs[i], scalingBig, mod1InvPoly.Coeffs[i])
+			}
+		}
+
+		if res, err = eval.PolynomialEvaluator.Evaluate(res, mod1InvPoly, res.Scale); err != nil {
+			return nil, fmt.Errorf("cannot Evaluate: %w", err)
+		}
+	}
+
+	// Multiplies back by q
+	res.Scale = ct.Scale
+	return res, nil
+}
+
 // EvaluateNew applies an homomorphic mod Q on a vector scaled by Delta, scaled down to mod 1:
 //
 //  1. Delta * (Q/Delta * I(X) + m(X)) (Delta = scaling factor, I(X) integer poly, m(X) message)
