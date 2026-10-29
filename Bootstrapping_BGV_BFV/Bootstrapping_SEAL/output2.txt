@@ -1,0 +1,1742 @@
+Q bit count is 420
+setup context
+initialized bootstrapper
+creating 173 galois keys
+created bootstrapping key
+
+result ciphertext is transparent
+result ciphertext is transparent
+result ciphertext is transparent
+result ciphertext is transparent
+result ciphertext is transparent
+result ciphertext is transparent
+result ciphertext is transparent
+result ciphertext is transparent
+result ciphertext is transparent
+result ciphertext is transparent
+result ciphertext is transparent
+result ciphertext is transparent
+result ciphertext is transparent
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 586 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 599 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 599 ms
+timing first LT: 586 ms
+timing inner product: 25 ms
+timing second LT: 549 ms
+timing digit extract: 600 ms
+timing first LT: 586 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 586 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 586 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 586 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 586 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 586 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 549 ms
+timing digit extract: 600 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 586 ms
+timing inner product: 25 ms
+timing second LT: 549 ms
+timing digit extract: 599 ms
+timing first LT: 586 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 586 ms
+timing inner product: 25 ms
+timing second LT: 549 ms
+timing digit extract: 600 ms
+timing first LT: 586 ms
+timing inner product: 25 ms
+timing second LT: 549 ms
+timing digit extract: 601 ms
+timing first LT: 586 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 601 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 586 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 601 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 549 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 601 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 599 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 601 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 600 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 601 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 601 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 602 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 554 ms
+timing digit extract: 601 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 554 ms
+timing digit extract: 602 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 602 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 602 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 602 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 602 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 603 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 554 ms
+timing digit extract: 603 ms
+timing first LT: 591 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 603 ms
+timing first LT: 591 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 602 ms
+timing first LT: 591 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 604 ms
+timing first LT: 591 ms
+timing inner product: 25 ms
+timing second LT: 554 ms
+timing digit extract: 603 ms
+timing first LT: 591 ms
+timing inner product: 25 ms
+timing second LT: 554 ms
+timing digit extract: 602 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 554 ms
+timing digit extract: 602 ms
+timing first LT: 591 ms
+timing inner product: 25 ms
+timing second LT: 554 ms
+timing digit extract: 603 ms
+timing first LT: 591 ms
+timing inner product: 25 ms
+timing second LT: 554 ms
+timing digit extract: 607 ms
+timing first LT: 591 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 603 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 554 ms
+timing digit extract: 604 ms
+timing first LT: 591 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 603 ms
+timing first LT: 591 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 603 ms
+timing first LT: 591 ms
+timing inner product: 25 ms
+timing second LT: 554 ms
+timing digit extract: 602 ms
+timing first LT: 591 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 603 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 602 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 554 ms
+timing digit extract: 602 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 602 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 601 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 602 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 602 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 601 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 601 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 601 ms
+timing first LT: 591 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 601 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 601 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 601 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 601 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 601 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 601 ms
+result ciphertext is transparent
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 554 ms
+timing digit extract: 602 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 601 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 601 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 601 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 600 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 600 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 600 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 601 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 601 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 600 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 600 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 600 ms
+timing first LT: 590 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 553 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 601 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 601 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 601 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 602 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 601 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 591 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 549 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 549 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 599 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 601 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 600 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 599 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 600 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 599 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 599 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 601 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 549 ms
+timing digit extract: 601 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 599 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 601 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 552 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 587 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 599 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 601 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 601 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 551 ms
+timing digit extract: 600 ms
+timing first LT: 588 ms
+timing inner product: 25 ms
+timing second LT: 550 ms
+timing digit extract: 601 ms
+timing first LT: 589 ms
+timing inner product: 25 ms
+timing second LT: 549 ms
+timing digit extract: 601 ms
+timing edit distance: 531470 ms
+
+noise budget initial: 130
+noise budget after first LT: 92
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 60
+noise budget after first LT: 22
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 21
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 22
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 60
+noise budget after first LT: 23
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 59
+noise budget after first LT: 22
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 21
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 22
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 22
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 22
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 59
+noise budget after first LT: 22
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 22
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 22
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 60
+noise budget after first LT: 22
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 60
+noise budget after first LT: 22
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 60
+noise budget after first LT: 21
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 60
+noise budget after first LT: 21
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 55
+noise budget after first LT: 17
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 55
+noise budget after first LT: 17
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 331
+noise budget after second LT: 257
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 54
+noise budget after first LT: 16
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 54
+noise budget after first LT: 16
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 17
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 143
+noise budget initial: 56
+noise budget after first LT: 17
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 57
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 17
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 17
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 55
+noise budget after first LT: 17
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 55
+noise budget after first LT: 17
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 55
+noise budget after first LT: 17
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 55
+noise budget after first LT: 17
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 17
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 17
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 53
+noise budget after first LT: 14
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 53
+noise budget after first LT: 14
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 57
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 18
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 56
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 56
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 57
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 20
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 20
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 55
+noise budget after first LT: 16
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 55
+noise budget after first LT: 16
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 55
+noise budget after first LT: 17
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 55
+noise budget after first LT: 17
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 54
+noise budget after first LT: 15
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 54
+noise budget after first LT: 15
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 58
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 55
+noise budget after first LT: 17
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 55
+noise budget after first LT: 17
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 55
+noise budget after first LT: 17
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 55
+noise budget after first LT: 17
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 56
+noise budget after first LT: 18
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 55
+noise budget after first LT: 16
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 55
+noise budget after first LT: 16
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 53
+noise budget after first LT: 14
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 53
+noise budget after first LT: 14
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 60
+noise budget after first LT: 22
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 60
+noise budget after first LT: 22
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 60
+noise budget after first LT: 23
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 22
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 22
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 58
+noise budget after first LT: 21
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 22
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 57
+noise budget after first LT: 20
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 22
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 60
+noise budget after first LT: 23
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 57
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 20
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 58
+noise budget after first LT: 19
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 22
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 144
+noise budget initial: 58
+noise budget after first LT: 19
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 22
+noise budget after inner product: 331
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 20
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+noise budget initial: 59
+noise budget after first LT: 21
+noise budget after inner product: 332
+noise budget after second LT: 258
+noise budget after digit extract: 145
+correctness ZUYDIFRKOAUVYUYE: 0

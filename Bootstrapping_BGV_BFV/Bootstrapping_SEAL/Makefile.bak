@@ -1,0 +1,34 @@
+SOURCES = bootstrapping.cpp contextchain.cpp seal.cpp extended_evaluator.cpp sparse_key_generator.cpp
+SEAL_DIR = /home/paiclab/Documents/ckw/cic_hed/edit_distance_runner/seal
+CXXFLAGS = -std=c++17 -w -I$(SEAL_DIR)/include/SEAL-4.1
+HEADERS = $(wildcard *.h)
+
+bootstrapping_seal: $(SOURCES:.cpp=.o) constants.o trace.o
+	g++ $^ -L$(SEAL_DIR)/lib -lseal-4.1 -o bootstrapping_seal
+
+# The generated trace is one huge function that only calls into the bootstrapper,
+# so heavy optimization is slow to compile and has no measurable effect on timings
+trace.o: trace.cpp $(HEADERS)
+	g++ $(CXXFLAGS) -O1 -c trace.cpp -o trace.o
+
+%.o: %.cpp $(HEADERS)
+	g++ $(CXXFLAGS) -O3 -c $< -o $@
+
+# Keeps the library object files so that only the new trace needs to be compiled
+clean:
+	rm -f bootstrapping_seal
+	rm -f constants.cpp constants.o
+	rm -f tmp_trace_1.cpp
+	rm -f tmp_trace_2.cpp
+	rm -f tmp_trace_3.cpp
+	rm -f tmp_trace_4.cpp
+	rm -f trace.cpp trace.o
+	rm -f ops
+	rm -f ctxt
+	rm -f is_ntt_optimal_domain
+	rm -r -f Files
+	mkdir Files
+	touch Files/.gitignore
+
+distclean: clean
+	rm -f *.o
