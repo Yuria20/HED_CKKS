@@ -153,7 +153,12 @@ func PrintDebugSpecial(cc he.Context, params ckks.Parameters, ciphertext *rlwe.C
 
 	res_sim = make([]int, cc.Batch_size)
 	for i := 0; i < cc.Batch_size; i++ {
-		res_sim[i] = int(math.Round(real(valuesTest[(i+1)*cc.M-1])))
+		min_val := 100000.0
+		for j := 0; j < cc.M-2; j++ {
+			min_val = math.Min(min_val, math.Round(real(valuesTest[(i)*cc.M+j])))
+			//fmt.Println(min_val)
+		}
+		res_sim[i] = int(min_val)
 		//valuesTest[i] = complex(float64(he.RootToByte(valuesTest[i], cc.C_size)), 0.0)
 	}
 

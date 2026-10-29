@@ -21,5 +21,6 @@ func DEC(cc Context, ctxt *rlwe.Ciphertext) []complex128 {
 	if err = cc.Encoder.Decode(plaintext, values); err != nil {
 		return nil
 	}
-	return values
+
+	return InverseInterLeave(values, cc.M, cc.Slot_size)
 }

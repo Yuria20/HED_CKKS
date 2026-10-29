@@ -20,7 +20,8 @@ func PrintString(strpt [][]int, tag string) {
 				fmt.Print(strpt[i][j])
 				fmt.Print(" ")
 			} else if tag == "str" {
-				fmt.Print(string(strpt[i][j]))
+				fmt.Print(
+					string(strpt[i][j]))
 			}
 		}
 		fmt.Println()

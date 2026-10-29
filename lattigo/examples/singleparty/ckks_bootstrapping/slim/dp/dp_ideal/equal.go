@@ -30,6 +30,7 @@ func EvalEQ_exp(cc he.Context, hermite int, ctxt1 *rlwe.Ciphertext, ctxt2 *rlwe.
 		} else {
 			values_want[i] = complex(0, 0)
 		}
+		
 	}
 
 	return he.ENC(cc, values_want, out_lv)

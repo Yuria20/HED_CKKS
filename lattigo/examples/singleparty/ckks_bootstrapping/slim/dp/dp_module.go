@@ -21,6 +21,10 @@ type DPState struct {
 	dist            *rlwe.Ciphertext
 
 	Res_sim []int
+
+	Eq_time  float64
+	Btp_time float64
+	Pre_time float64
 }
 
 func (state *DPState) GenDPstate(cc he.Context, strct1 he.StrCipher, strct2 he.StrCipher) {
@@ -29,16 +33,11 @@ func (state *DPState) GenDPstate(cc he.Context, strct1 he.StrCipher, strct2 he.S
 	PCD_start := time.Now()
 	state.GenEqTable(cc, strct1, strct2)
 	PCD_time := time.Since(PCD_start)
-	fmt.Print("PCD time (latency)", float64(PCD_time.Seconds()))
-	fmt.Println()
-	fmt.Print("PCD time (amortized)", float64(PCD_time.Seconds())/float64(cc.Batch_size))
-	fmt.Println()
-
-	// Debug
-	for i := 0; i < cc.M; i++ {
-		fmt.Println(state.E[i].Level())
-		//state.E[i], _ = he.BootstrapIdeal(cc, state.E[i])
-	}
+	state.Eq_time = PCD_time.Seconds()
+	//fmt.Print("PCD time (latency)", float64(PCD_time.Seconds()))
+	//fmt.Println()
+	//fmt.Print("PCD time (amortized)", float64(PCD_time.Seconds())/float64(cc.Batch_size))
+	//fmt.Println()
 
 	state.H = make([]*rlwe.Ciphertext, cc.M)
 	state.V = make([]*rlwe.Ciphertext, cc.M)
@@ -96,6 +95,8 @@ func (state *DPState) DpFold(cc he.Context) {
 
 	eval := cc.Eval
 
+	precom_time := time.Now()
+	fmt.Println()
 	// ones // forward(d=0), backwoard(d=1)
 	plainList := make([][]*rlwe.Plaintext, 2)
 	for d := 0; d < 2; d++ {
@@ -165,7 +166,7 @@ func (state *DPState) DpFold(cc he.Context) {
 			}
 
 			values = he.InterLeave(values, cc.M, cc.Slot_size)
-			maskList[d][i] = ckks.NewPlaintext(cc.Params, cc.Params.MaxLevel())
+			maskList[d][i] = ckks.NewPlaintext(cc.Params, cc.Max_lv)
 			if err := cc.Encoder.Encode(values, maskList[d][i]); err != nil { // values: []complex128 또는 []float64
 				panic(err)
 			}
@@ -203,12 +204,14 @@ func (state *DPState) DpFold(cc he.Context) {
 			}
 
 			values = he.InterLeave(values, cc.M, cc.Slot_size)
-			corrList[d][i] = ckks.NewPlaintext(cc.Params, cc.Params.MaxLevel())
+			corrList[d][i] = ckks.NewPlaintext(cc.Params, cc.Max_lv)
 			if err := cc.Encoder.Encode(values, corrList[d][i]); err != nil { // values: []complex128 또는 []float64
 				panic(err)
 			}
 		}
 	}
+
+	state.Pre_time = float64(time.Since(precom_time).Seconds())
 
 	// up init
 	H_up, err := eval.MulRelinNew(state.E[0], maskList[0][0])
@@ -240,9 +243,20 @@ func (state *DPState) DpFold(cc he.Context) {
 	down_mid = V_down.CopyNew()
 	eval.Mul(down_mid, -2, down_mid)
 
-	//debug.PrintDebug(cc, cc.Params, up_mid, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
+	cpx2int := func(ct *rlwe.Ciphertext) *rlwe.Ciphertext {
+		temp := ct.CopyNew()
+		temp_conj, _ := eval.ConjugateNew(temp)
+		eval.Mul(temp, complex(-1, -1), temp)
+		eval.Mul(temp_conj, complex(-1, 1), temp_conj)
+		eval.Add(temp, temp_conj, temp)
+		return temp
+	}
 
+	//debug.PrintDebug(cc, cc.Params, up_mid, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
+	count := 0
+	fmt.Println("iter : ", cc.M)
 	for i := 1; i < cc.M-1; i++ {
+
 		// H[k], 1
 		eval.Add(H_up, plainList[0][i], H_up)
 
@@ -254,6 +268,7 @@ func (state *DPState) DpFold(cc he.Context) {
 		eval.Add(V_up, plainList[0][0], V_up)
 
 		// delta , 0, 0, 0
+		//fmt.Println("levels (eq): ", state.E[i].Level())
 		E, err := eval.MulRelinNew(state.E[i], maskList[0][i])
 		if err != nil {
 			panic(err)
@@ -261,27 +276,23 @@ func (state *DPState) DpFold(cc he.Context) {
 		if err = eval.Rescale(E, E); err != nil {
 			panic(err)
 		}
+		//fmt.Println("levels (eq): ", E.Level())
 
 		H_up, V_up = state.EvalHV(cc, E, H_up, V_up)
 		// 보정
 		eval.Sub(H_up, corrList[0][i], H_up)
 		eval.Sub(V_up, corrList[0][i], V_up)
 
-		H_up, _ = he.BootstrapIdeal(cc, H_up)
-		V_up, _ = he.BootstrapIdeal(cc, V_up)
-
-		//fmt.Printf("UP : %d 번째 Table Update! \n", i)
-		//debug.PrintDebug(cc, cc.Params, H_up, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
-		//debug.PrintDebug(cc, cc.Params, V_up, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
-
 		// complex => int
-		temp := V_up.CopyNew()
-		eval.Add(V_up, temp, temp)
-		eval.MulRelin(temp, temp, temp)
-		eval.Rescale(temp, temp)
-		eval.Mul(temp, -1, temp)
-		eval.Add(up_mid, temp, up_mid)
+		// temp := V_up.CopyNew()
+		// temp_conj, _ := eval.ConjugateNew(temp)
+		// eval.Mul(temp, complex(-1, -1), temp)
+		// eval.Mul(temp_conj, complex(-1, 1), temp_conj)
+		// eval.Add(temp, temp_conj, temp)
+		// eval.Add(up_mid, temp, up_mid)
 
+		temp := cpx2int(V_up)
+		eval.Add(up_mid, temp, up_mid)
 		//debug.PrintDebug(cc, cc.Params, up_mid, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
 
 		if i == cc.M-3 {
@@ -316,24 +327,114 @@ func (state *DPState) DpFold(cc he.Context) {
 		eval.Sub(H_down, corrList[1][i], H_down)
 		eval.Sub(V_down, corrList[1][i], V_down)
 
-		H_down, _ = he.BootstrapIdeal(cc, H_down)
-		V_down, _ = he.BootstrapIdeal(cc, V_down)
-
-		//fmt.Printf("DOWN : %d 번째 Table Update! \n", i)
-		//debug.PrintDebug(cc, cc.Params, H_down, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
-		//debug.PrintDebug(cc, cc.Params, V_down, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
-
-		// complex => int
-		temp = V_down.CopyNew()
-		eval.Add(V_down, temp, temp)
-		eval.MulRelin(temp, temp, temp)
-		eval.Rescale(temp, temp)
-		eval.Mul(temp, -1, temp)
+		temp = cpx2int(V_down)
 		eval.Add(down_mid, temp, down_mid)
 
 		if i == cc.M-3 {
 			down_prev = down_mid.CopyNew()
 		}
+
+		if H_up.Level()-2 < 3 {
+			count += 1
+			//fmt.Println(count)
+
+			//H_up, _ = he.BootstrapIdeal(cc, H_up)
+
+			temp1 := cpx2int(H_up)
+			temp2 := cpx2int(V_up)
+			temp3 := cpx2int(H_down)
+			temp4 := cpx2int(V_down)
+
+			//fmt.Println(temp1.Level())
+			//fmt.Println(temp2.Level())
+			//fmt.Println(temp3.Level())
+			//fmt.Println(temp4.Level())
+			// temp1 := H_up.CopyNew()
+			// eval.Add(H_up, temp1, temp1)
+			// eval.MulRelin(temp1, temp1, temp1)
+			// eval.Rescale(temp1, temp1)
+			// eval.Mul(temp1, -1, temp1)
+
+			// temp2 := V_up.CopyNew()
+			// eval.Add(V_up, temp2, temp2)
+			// eval.MulRelin(temp2, temp2, temp2)
+			// eval.Rescale(temp2, temp2)
+			// eval.Mul(temp2, -1, temp2)
+
+			// temp3 := H_down.CopyNew()
+			// eval.Add(H_down, temp3, temp3)
+			// eval.MulRelin(temp3, temp3, temp3)
+			// eval.Rescale(temp3, temp3)
+			// eval.Mul(temp3, -1, temp3)
+
+			// temp4 := V_down.CopyNew()
+			// eval.Add(V_down, temp4, temp4)
+			// eval.MulRelin(temp4, temp4, temp4)
+			// eval.Rescale(temp4, temp4)
+			// eval.Mul(temp4, -1, temp4)
+
+			// temp1 := H_up.CopyNew()
+			// temp1_conj, _ := eval.ConjugateNew(temp1)
+			// eval.Mul(temp1, complex(-1, -1), temp1)
+			// eval.Mul(temp1_conj, complex(-1, 1), temp1_conj)
+			// eval.Add(temp1, temp1_conj, temp1)
+
+			// temp2 := V_up.CopyNew()
+			// temp2_conj, _ := eval.ConjugateNew(temp2)
+			// eval.Mul(temp2, complex(-1, -1), temp2)
+			// eval.Mul(temp2_conj, complex(-1, 1), temp2_conj)
+			// eval.Add(temp2, temp2_conj, temp2)
+
+			// temp3 := H_down.CopyNew()
+			// temp3_conj, _ := eval.ConjugateNew(temp3)
+			// eval.Mul(temp3, complex(-1, -1), temp3)
+			// eval.Mul(temp3_conj, complex(-1, 1), temp3_conj)
+			// eval.Add(temp3, temp3_conj, temp3)
+
+			// temp4 := V_down.CopyNew()
+			// temp4_conj, _ := eval.ConjugateNew(temp4)
+			// eval.Mul(temp4, complex(-1, -1), temp4)
+			// eval.Mul(temp4_conj, complex(-1, 1), temp4_conj)
+			// eval.Add(temp4, temp4_conj, temp4)
+
+			//debug.PrintDebug(cc, cc.Params, H_up, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
+
+			btp_start := time.Now()
+			//HVHV := he.DiBootstrapSpecial2(cc, []*rlwe.Ciphertext{temp1, temp2, temp3, temp4})
+			HVHV := he.DiBootstrapSpecial(cc, []*rlwe.Ciphertext{temp1, temp2, temp3, temp4})
+			//debug.PrintDebug(cc, cc.Params, HVHV[0], he.DEC(cc, H_up), cc.Decryptor, cc.Encoder)
+			//debug.PrintDebug(cc, cc.Params, HVHV[1], he.DEC(cc, V_up), cc.Decryptor, cc.Encoder)
+			//debug.PrintDebug(cc, cc.Params, HVHV[2], he.DEC(cc, H_down), cc.Decryptor, cc.Encoder)
+			//debug.PrintDebug(cc, cc.Params, HVHV[3], he.DEC(cc, V_down), cc.Decryptor, cc.Encoder)
+			//fmt.Println("level")
+			//fmt.Println(HVHV[0].Level())
+			//fmt.Println(HVHV[1].Level())
+			//fmt.Println(HVHV[2].Level())
+			//fmt.Println(HVHV[3].Level())
+			//fmt.Println(float64(time.Since(btp_start).Seconds()))
+			state.Btp_time += float64(time.Since(btp_start).Seconds())
+			H_up = HVHV[0]
+			V_up = HVHV[1]
+			H_down = HVHV[2]
+			V_down = HVHV[3]
+			fmt.Println("bootstrap!")
+			//fmt.Println("levels : ", H_up.Level(), V_up.Level(), H_down.Level(), V_down.Level())
+
+		}
+
+		// if V_up.Level()-2 < 4 {
+		// 	V_up, _ = he.BootstrapIdeal(cc, V_up)
+		// }
+		// if H_down.Level()-2 < 4 {
+		// 	H_down, _ = he.BootstrapIdeal(cc, H_down)
+		// }
+		// if V_down.Level()-2 < 4 {
+		// 	V_down, _ = he.BootstrapIdeal(cc, V_down)
+		// }
+		//fmt.Printf("DOWN : %d 번째 Table Update! \n", i)
+		//debug.PrintDebug(cc, cc.Params, H_down, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
+		//debug.PrintDebug(cc, cc.Params, V_down, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
+
 	}
 
 	up_prev_values := make([]complex128, cc.Slot_size)
@@ -388,6 +489,43 @@ func (state *DPState) DpFold(cc he.Context) {
 	eval.Add(up_mid, up_mid_values, up_mid)
 	eval.Add(down_mid, down_mid_values, down_mid)
 
+	//fmt.Println(up_prev.Level(), down_prev.Level(), up_mid.Level(), down_mid.Level())
+
+	// // x > y = 1, else = 0
+	// debug.PrintDebug(cc, cc.Params, up_prev, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
+	// debug.PrintDebug(cc, cc.Params, down_prev, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
+
+	// comp1 := he.DiBootstrapSpecial2(cc, up_prev.CopyNew(), down_prev.CopyNew())
+	// up_prev = he.DiBootstrapSpecial3(cc, up_prev)
+	// down_prev = he.DiBootstrapSpecial3(cc, down_prev)
+	// allone := make([]complex128, cc.Slot_size)
+	// for i := 0; i < len(allone); i++ {
+	// 	allone[i] = complex(1, 0)
+	// }
+
+	// // y*c
+	// temp, _ := cc.Eval.MulRelinNew(comp1, down_prev)
+	// eval.Rescale(temp, temp)
+
+	// // (c-1)*x
+	// eval.Sub(comp1, allone, up_prev)
+	// eval.Sub(temp, comp1, up_prev)
+	// debug.PrintDebug(cc, cc.Params, up_prev, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
+
+	// //down_prev2 := he.DiBootstrapSpecial2(cc, down_prev.CopyNew())
+	// comp2 := he.DiBootstrapSpecial2(cc, up_mid.CopyNew(), down_mid.CopyNew())
+	// //down_mid2 := he.DiBootstrapSpecial2(cc, down_mid.CopyNew())
+
+	// // up_mid = he.DiBootstrapSpecial3(cc, up_mid)
+	// // down_mid = he.DiBootstrapSpecial3(cc, down_mid)
+
+	// debug.PrintDebug(cc, cc.Params, comp1, he.DEC(cc, up_prev), cc.Decryptor, cc.Encoder)
+	// // debug.PrintDebug(cc, cc.Params, down_prev2, he.DEC(cc, down_prev), cc.Decryptor, cc.Encoder)
+	// debug.PrintDebug(cc, cc.Params, comp2, he.DEC(cc, up_mid), cc.Decryptor, cc.Encoder)
+	// debug.PrintDebug(cc, cc.Params, down_mid2, he.DEC(cc, down_mid), cc.Decryptor, cc.Encoder)
+
+	//fmt.Println(up_prev2.Level(), down_prev2.Level(), up_mid2.Level(), down_mid2.Level())
+
 	// fmt.Println(up_prev.Level(), down_prev.Level())
 	//debug.PrintDebug(cc, cc.Params, up_prev, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
 	//debug.PrintDebug(cc, cc.Params, down_prev, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
@@ -396,8 +534,29 @@ func (state *DPState) DpFold(cc he.Context) {
 	// debug.PrintDebug(cc, cc.Params, down_mid, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
 
 	min_prev := state.Min_prev(cc, up_prev, down_prev)
+	//debug.PrintDebug(cc, cc.Params, min_prev, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
 	min_mid := state.Min_mid(cc, up_mid, down_mid)
-	min_final := state.Min_final(cc, min_prev, min_mid)
+	//debug.PrintDebug(cc, cc.Params, min_mid, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
+	//min_final := state.Min_final(cc, min_prev, min_mid)
+
+	// x > y = 1, else = 0
+	//debug.PrintDebug(cc, cc.Params, up_prev, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
+	//debug.PrintDebug(cc, cc.Params, down_prev, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
+
+	comp1 := he.DiBootstrapSpecial2(cc, min_prev.CopyNew(), min_mid.CopyNew())
+	//up_prev = he.DiBootstrapSpecial3(cc, up_prev)
+	//down_prev = he.DiBootstrapSpecial3(cc, down_prev)
+
+	// y*c
+	temp, _ := cc.Eval.MulRelinNew(comp1, min_mid)
+	eval.Rescale(temp, temp)
+
+	// (c-1)*x
+	eval.Sub(comp1, 1, comp1)
+	eval.Mul(comp1, min_prev, min_prev)
+	eval.Rescale(min_prev, min_prev)
+	min_final, _ := eval.SubNew(temp, min_prev)
+	//debug.PrintDebug(cc, cc.Params, min_final, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
 
 	_, res_sim := debug.PrintDebugSpecial(cc, cc.Params, min_final, make([]complex128, cc.Slot_size), cc.Decryptor, cc.Encoder)
 	state.Res_sim = res_sim
@@ -405,33 +564,46 @@ func (state *DPState) DpFold(cc he.Context) {
 }
 
 func (state *DPState) Min_prev(cc he.Context, up_prev *rlwe.Ciphertext, down_prev *rlwe.Ciphertext) (min_prev *rlwe.Ciphertext) {
-	values1 := he.InverseInterLeave(he.DEC(cc, up_prev), cc.M, cc.Slot_size)
-	values2 := he.InverseInterLeave(he.DEC(cc, down_prev), cc.M, cc.Slot_size)
-	eq := he.InverseInterLeave(he.DEC(cc, state.E[cc.M-1]), cc.M, cc.Slot_size)
+	debug := false
+	if debug == false {
+		values1 := he.DEC(cc, up_prev)
+		values2 := he.DEC(cc, down_prev)
+		eq := he.DEC(cc, state.E[cc.M-1])
 
-	values := make([]complex128, cc.Slot_size)
-	fmt.Println(cc.Batch_size)
-	for j := 0; j < cc.Batch_size; j++ {
-		min_prev := 1000000.0
-		for k := 0; k < cc.M-2; k++ {
-			if j == 0 {
-				//fmt.Println(eq[j*cc.M+k])
-				//fmt.Println(real(values1[j*cc.M+k]), real(values2[j*cc.M+k+2]), (real(eq[j*cc.M+k+1]) + 1.0))
-				//fmt.Println(real(values1[j*cc.M+k]) + real(values2[j*cc.M+k+2]) + (real(eq[j*cc.M+k]) + 1.0))
+		values := make([]complex128, cc.Slot_size)
+		//fmt.Println(cc.Batch_size)
+		for j := 0; j < cc.Batch_size; j++ {
+			min_prev := 1000000.0
+			for k := 0; k < cc.M-2; k++ {
+				if j == 0 {
+					//fmt.Println(eq[j*cc.M+k])
+					//fmt.Println(real(values1[j*cc.M+k]), real(values2[j*cc.M+k+2]), (real(eq[j*cc.M+k+1]) + 1.0))
+					//fmt.Println(real(values1[j*cc.M+k]) + real(values2[j*cc.M+k+2]) + (real(eq[j*cc.M+k]) + 1.0))
+				}
+				min_prev = math.Min(min_prev, real(values1[j*cc.M+k])+real(values2[j*cc.M+k+2])+(real(eq[j*cc.M+k+1])+1.0))
 			}
-			min_prev = math.Min(min_prev, real(values1[j*cc.M+k])+real(values2[j*cc.M+k+2])+(real(eq[j*cc.M+k+1])+1.0))
+			values[cc.M*j] = complex(min_prev, 0)
+			//fmt.Println(min_prev)
 		}
-		values[cc.M*j] = complex(min_prev, 0)
-		//fmt.Println(min_prev)
-	}
 
-	min_prev, _ = he.ENC(cc, he.InterLeave(values, cc.M, cc.Slot_size), cc.Max_lv)
-	return min_prev
+		min_prev, _ = he.ENC(cc, he.InterLeave(values, cc.M, cc.Slot_size), cc.Max_lv)
+
+		cc.Eval.Rotate(down_prev, 2*cc.Slot_size/cc.M, down_prev)
+		cc.Eval.Rotate(state.E[cc.M-1], cc.Slot_size/cc.M, state.E[cc.M-1])
+		min_prev, _ = cc.Eval.AddNew(up_prev, down_prev)
+		cc.Eval.Add(min_prev, state.E[cc.M-1], min_prev)
+		cc.Eval.Add(min_prev, 1, min_prev)
+		return min_prev
+
+		return min_prev
+	} else {
+		return min_prev
+	}
 }
 
 func (state *DPState) Min_mid(cc he.Context, up_mid *rlwe.Ciphertext, down_mid *rlwe.Ciphertext) (min_mid *rlwe.Ciphertext) {
-	values1 := he.InverseInterLeave(he.DEC(cc, up_mid), cc.M, cc.Slot_size)
-	values2 := he.InverseInterLeave(he.DEC(cc, down_mid), cc.M, cc.Slot_size)
+	values1 := he.DEC(cc, up_mid)
+	values2 := he.DEC(cc, down_mid)
 
 	values := make([]complex128, cc.Slot_size)
 	fmt.Println(cc.Batch_size)
@@ -444,18 +616,24 @@ func (state *DPState) Min_mid(cc he.Context, up_mid *rlwe.Ciphertext, down_mid *
 				//fmt.Println(real(values1[j*cc.M+k]) + real(values2[j*cc.M+k+1]))
 			}
 			min_mid = math.Min(min_mid, real(values1[j*cc.M+k])+real(values2[j*cc.M+k+1]))
+
 		}
+		//fmt.Println(min_mid)
 		values[cc.M*j] = complex(min_mid, 0)
 		//fmt.Println(min_mid)
 	}
 
 	min_mid, _ = he.ENC(cc, he.InterLeave(values, cc.M, cc.Slot_size), cc.Max_lv)
+
+	cc.Eval.Rotate(down_mid, cc.Slot_size/cc.M, down_mid)
+	min_mid, _ = cc.Eval.AddNew(up_mid, down_mid)
+
 	return min_mid
 }
 
 func (state *DPState) Min_final(cc he.Context, min_prev *rlwe.Ciphertext, min_mid *rlwe.Ciphertext) (min_final *rlwe.Ciphertext) {
-	values1 := he.InverseInterLeave(he.DEC(cc, min_prev), cc.M, cc.Slot_size)
-	values2 := he.InverseInterLeave(he.DEC(cc, min_mid), cc.M, cc.Slot_size)
+	values1 := he.DEC(cc, min_prev)
+	values2 := he.DEC(cc, min_mid)
 
 	values := make([]complex128, cc.Slot_size)
 	fmt.Println(cc.Batch_size)
@@ -469,6 +647,7 @@ func (state *DPState) Min_final(cc he.Context, min_prev *rlwe.Ciphertext, min_mi
 			}
 
 			min_mid = math.Min(real(values1[j*cc.M+k]), real(values2[j*cc.M+k]))
+			//fmt.Println(min_mid)
 		}
 		values[cc.M*j+cc.M-1] = complex(min_mid, 0)
 		//fmt.Println(min_mid)

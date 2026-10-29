@@ -35,7 +35,7 @@ type Context struct {
 func (cc *Context) GenContext(logN int, Avail_lv int, LogB int, H int, str_len int) {
 	LogN := logN
 	cc.M = str_len
-	LogDefaultScale := 45
+	LogDefaultScale := 46
 	sz := LogDefaultScale
 
 	q0 := []int{sz}                      // ScaleDown & ModUp
@@ -49,24 +49,24 @@ func (cc *Context) GenContext(logN int, Avail_lv int, LogB int, H int, str_len i
 		qiLookUpTable = append(qiLookUpTable, []int{sz}...)
 	}
 	qiEvalMod := []int{sz, sz, sz, sz, sz, sz, sz, sz} // EvalMod
-	qiCoeffsToSlots := []int{42, 42, 42}               // CoeffsToSlots
+	qiCoeffsToSlots := []int{sz, sz, sz}               // CoeffsToSlots
 
-	/// print
-	arrays := []struct {
-		name string
-		vals []int
-	}{
-		{"q0", q0},
-		{"S2C", qiSlotsToCoeffs},
-		{"Circuit", qiCircuitSlots},
-		{"LUT", qiLookUpTable},
-		{"EvalExp", qiEvalMod},
-		{"C2S", qiCoeffsToSlots},
-	}
+	// /// print
+	// arrays := []struct {
+	// 	name string
+	// 	vals []int
+	// }{
+	// 	{"q0", q0},
+	// 	{"S2C", qiSlotsToCoeffs},
+	// 	{"Circuit", qiCircuitSlots},
+	// 	{"LUT", qiLookUpTable},
+	// 	{"EvalExp", qiEvalMod},
+	// 	{"C2S", qiCoeffsToSlots},
+	// }
 
-	for _, a := range arrays {
-		fmt.Printf("%s : %v\n", a.name, a.vals)
-	}
+	// for _, a := range arrays {
+	// 	fmt.Printf("%s : %v\n", a.name, a.vals)
+	// }
 
 	LogQ := append([]int{}, q0...)
 	LogQ = append(LogQ, qiSlotsToCoeffs...)
@@ -84,7 +84,7 @@ func (cc *Context) GenContext(logN int, Avail_lv int, LogB int, H int, str_len i
 		LogQ:            LogQ,
 		LogP:            []int{sz + 1, sz + 1, sz + 1, sz + 1, sz + 1},
 		LogDefaultScale: LogDefaultScale,
-		Xs:              ring.Ternary{H: 192},
+		Xs:              ring.Ternary{H: 32768},
 	})
 	if err != nil {
 		panic(err)
@@ -112,7 +112,7 @@ func (cc *Context) GenContext(logN int, Avail_lv int, LogB int, H int, str_len i
 		Mod1InvDegree:   0,
 	}
 
-	B := 1 << LogB
+	B := 81
 	S2C_scale := *big.NewFloat(float64(1.0) / float64(B))
 	SlotsToCoeffsParams := dft.MatrixLiteral{
 		Type:         dft.HomomorphicDecode,
@@ -163,12 +163,21 @@ func (cc *Context) GenContext(logN int, Avail_lv int, LogB int, H int, str_len i
 		panic(err)
 	}
 
-	extraGalEls := make([]uint64, str_len+1)
+	extraGalEls := []uint64{}
 	for i := 0; i < str_len; i++ {
 		//fmt.Println(i * cc.Slot_size / cc.M)
-		extraGalEls[i] = btpParams.ResidualParameters.GaloisElement(i * params.MaxSlots() / cc.M)
+		if str_len == 256 {
+			if i == str_len/2 {
+				break
+			}
+		}
+		extraGalEls = append(extraGalEls, btpParams.ResidualParameters.GaloisElement(i*params.MaxSlots()/cc.M))
 	}
-	extraGalEls[str_len] = btpParams.ResidualParameters.GaloisElement(-1 * cc.Slot_size / cc.M)
+	//fmt.Println(len(extraGalEls))
+	extraGalEls = append(extraGalEls, btpParams.ResidualParameters.GaloisElement(-1*params.MaxSlots()/cc.M))
+	//fmt.Println(extraGalEls)
+	//fmt.Println(len(extraGalEls))
+	//extraGalEls[str_len] =
 
 	newGalKeys := kgen.GenGaloisKeysNew(extraGalEls, sk)
 	for _, gk := range newGalKeys {

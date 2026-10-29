@@ -91,49 +91,135 @@ func PreComputeDeltas2(cc he.Context, hermite int, ctxt1 *rlwe.Ciphertext, ctxt2
 }
 
 func PreComputeDeltas(cc he.Context, hermite int, ctxt1 *rlwe.Ciphertext, ctxt2 *rlwe.Ciphertext) []*rlwe.Ciphertext {
-	//sz := cc.C_size
-	str_len := cc.M
-	//b_sz := cc.Batch_size
-	eval := cc.Eval
-	var err error
+	if cc.M != 256 {
+		//sz := cc.C_size
+		str_len := cc.M
+		//b_sz := cc.Batch_size
+		eval := cc.Eval
+		var err error
 
-	// Note : str.A가 column에 있고 str.B가 row에 있을 예정임.
-	roted_list := make([]*rlwe.Ciphertext, str_len)
+		// Note : str.A가 column에 있고 str.B가 row에 있을 예정임.
+		roted_list := make([]*rlwe.Ciphertext, str_len)
 
-	shift_idx := []int{}
-	for i := 0; i < str_len; i++ {
-		shift_idx = append(shift_idx, i*cc.Slot_size/cc.M)
-	}
-	//fmt.Println(shift_idx)
-
-	rot_start := time.Now()
-	temp_list, err := eval.Evaluator.RotateHoistedNew(ctxt2, shift_idx)
-	if err != nil {
-		panic(err)
-	}
-	rot_time := time.Since(rot_start)
-
-	for i := 1; i <= str_len; i++ {
-		roted_list[i-1] = temp_list[(str_len-i)*cc.Slot_size/cc.M]
-	}
-
-	rtn_list := make([]*rlwe.Ciphertext, str_len)
-	rot_start = time.Now()
-	// conjugate : exp(y) ==> exp(-y)
-	err = eval.Conjugate(ctxt1, ctxt1)
-	if err != nil {
-		panic(err)
-	}
-	for i := 0; i < str_len; i++ {
-		rtn_list[i], err = EvalEQ_exp2(cc, 0, ctxt1, roted_list[i])
-		if err != nil {
-			panic(nil)
+		shift_idx := []int{}
+		for i := 0; i < str_len; i++ {
+			shift_idx = append(shift_idx, i*cc.Slot_size/cc.M)
 		}
+		//fmt.Println(shift_idx)
+
+		//rot_start := time.Now()
+		temp_list, err := eval.Evaluator.RotateHoistedNew(ctxt2, shift_idx)
+		if err != nil {
+			panic(err)
+		}
+		//rot_time := time.Since(rot_start)
+
+		for i := 1; i <= str_len; i++ {
+			roted_list[i-1] = temp_list[(str_len-i)*cc.Slot_size/cc.M]
+		}
+
+		rtn_list := make([]*rlwe.Ciphertext, str_len)
+		//	rot_start = time.Now()
+		// conjugate : exp(y) ==> exp(-y)
+		err = eval.Conjugate(ctxt1, ctxt1)
+		if err != nil {
+			panic(err)
+		}
+		for i := 0; i < str_len; i++ {
+			//temp := eval.DropLevelNew(ctxt1, (i%4)*2)
+			temp := eval.DropLevelNew(ctxt1, 0)
+			//roted_list[i] = eval.DropLevelNew(roted_list[i], (i%4)*2)
+			roted_list[i] = eval.DropLevelNew(roted_list[i], 0)
+			if i == 0 {
+				fmt.Println("levels : ", temp.Level(), roted_list[i].Level())
+			}
+
+			rtn_list[i], err = EvalEQ_exp2(cc, 0, temp, roted_list[i])
+			if i == 0 {
+				fmt.Println(rtn_list[i].Level())
+			}
+
+			//fmt.Printf("equlaity index : %d && level : %d\n", i, rtn_list[i].Level())
+			if err != nil {
+				panic(nil)
+			}
+		}
+		//eq_time := time.Since(rot_start)
+
+		//fmt.Println("rot time : ", rot_time)
+		//fmt.Println("eq time : ", eq_time)
+
+		return rtn_list
+	} else {
+		//sz := cc.C_size
+		str_len := cc.M
+		//b_sz := cc.Batch_size
+		eval := cc.Eval
+		var err error
+
+		// Note : str.A가 column에 있고 str.B가 row에 있을 예정임.
+		roted_list := make([]*rlwe.Ciphertext, str_len)
+
+		shift_idx := []int{}
+		for i := 0; i < str_len/2; i++ {
+			shift_idx = append(shift_idx, i*cc.Slot_size/cc.M)
+		}
+		//fmt.Println(shift_idx)
+
+		//rot_start := time.Now()
+		temp_list, err := eval.Evaluator.RotateHoistedNew(ctxt2, shift_idx)
+		if err != nil {
+			panic(err)
+		}
+
+		ctxt2_tmp, _ := eval.RotateNew(ctxt2, (str_len/2)*cc.Slot_size/cc.M)
+		temp_list2, err := eval.Evaluator.RotateHoistedNew(ctxt2_tmp, shift_idx)
+		if err != nil {
+			panic(err)
+		}
+
+		//rot_time := time.Since(rot_start)
+
+		for i := 1; i <= str_len; i++ {
+			if i <= str_len/2 {
+				roted_list[i-1] = temp_list2[(str_len/2-i)*cc.Slot_size/cc.M]
+			} else {
+				roted_list[i-1] = temp_list[(str_len-i)*cc.Slot_size/cc.M]
+			}
+
+		}
+
+		rtn_list := make([]*rlwe.Ciphertext, str_len)
+		//rot_start = time.Now()
+		// conjugate : exp(y) ==> exp(-y)
+		err = eval.Conjugate(ctxt1, ctxt1)
+		if err != nil {
+			panic(err)
+		}
+		for i := 0; i < str_len; i++ {
+			//temp := eval.DropLevelNew(ctxt1, (i%4)*2)
+			temp := eval.DropLevelNew(ctxt1, 0)
+			//roted_list[i] = eval.DropLevelNew(roted_list[i], (i%4)*2)
+			roted_list[i] = eval.DropLevelNew(roted_list[i], 0)
+			//if i == 0 {
+			//	fmt.Println("levels : ", temp.Level(), roted_list[i].Level())
+			//}
+
+			rtn_list[i], err = EvalEQ_exp2(cc, 0, temp, roted_list[i])
+			if i == 0 {
+				//fmt.Println(rtn_list[i].Level())
+			}
+
+			//fmt.Printf("equlaity index : %d && level : %d\n", i, rtn_list[i].Level())
+			if err != nil {
+				panic(nil)
+			}
+		}
+		//eq_time := time.Since(rot_start)
+
+		//	fmt.Println("rot time : ", rot_time)
+		//fmt.Println("eq time : ", eq_time)
+
+		return rtn_list
 	}
-	eq_time := time.Since(rot_start)
-
-	fmt.Println("rot time : ", rot_time)
-	fmt.Println("eq time : ", eq_time)
-
-	return rtn_list
 }

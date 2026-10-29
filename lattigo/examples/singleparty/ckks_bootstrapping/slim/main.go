@@ -40,6 +40,7 @@ import (
 	"flag"
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/tuneinsight/lattigo/v6/core/rlwe"
 	"github.com/tuneinsight/lattigo/v6/schemes/ckks"
@@ -53,20 +54,22 @@ func main() {
 
 	// Default LogN, which with the following defined parameters
 	// provides a security of 128-bit.
-	LogN := 13
+	LogN := 16
 
 	if *flagShort {
 		LogN -= 3
 	}
 
 	var cc he.Context
-	fmt.Print("Generate Context... ")
 
-	for i := 8; i <= 8; i++ {
+	for i := 8; i >= 3; i-- {
+
 		cc.M = (1 << i)
+		fmt.Printf("===================== str_len = %d ===============================\n", cc.M)
 		str_len := cc.M
 		// [cpx2int] + (eval depth) * (# eval) + (eq depth)
-		cc.GenContext(LogN, 1+2*5+2, 4, 1, str_len)
+		fmt.Print("Generate Context... \n")
+		cc.GenContext(LogN, 1+2*4+10, 0, 0, str_len)
 		fmt.Println("Done!")
 
 		cc.C_size = 128
@@ -91,9 +94,20 @@ func main() {
 			ct_B.StrEncrypt(cc, cc.Exp_lv, rev_str_B)
 
 			var st dp.DPState
+			dp_start := time.Now()
 			st.GenDPstate(cc, ct_A, ct_B)
 			st.ComputeDpTable(cc)
-
+			dp_time := time.Since(dp_start).Seconds()
+			fmt.Println("Latency : ", dp_time-st.Pre_time)
+			fmt.Println("AMortized : ", (dp_time-st.Pre_time)/float64(cc.Batch_size))
+			fmt.Println("Precomputation time : ", st.Pre_time)
+			fmt.Println("Precomputation time (amortized) : ", st.Pre_time/float64(cc.Batch_size))
+			fmt.Println("PCD time : ", st.Eq_time)
+			fmt.Println("PCD time (amortized) : ", st.Eq_time/float64(cc.Batch_size))
+			fmt.Println("bootstrapping time : ", st.Btp_time)
+			fmt.Println("bootstrapping time (amortized) : ", st.Btp_time/float64(cc.Batch_size))
+			fmt.Println("Others time : ", dp_time-st.Pre_time-st.Eq_time-st.Btp_time)
+			fmt.Println("Others time (amortized) : ", (dp_time-st.Pre_time-st.Eq_time-st.Btp_time)/float64(cc.Batch_size))
 			res_ideal := make([]int, cc.Batch_size)
 			for k := 0; k < cc.Batch_size; k++ {
 				res_ideal[k] = dp_ideal.LevenshteinDistance(str_A[k], str_B[k])
@@ -114,6 +128,8 @@ func main() {
 			}
 			fmt.Println("Pass!")
 		}
+		fmt.Println()
+		fmt.Println()
 	}
 }
 
