@@ -1,46 +1,40 @@
-# banded_HED
+# HED-CKKS: Efficient Homomorphic Edit Distance Computation
 
-## 환경
+This repository contains a proof-of-concept implementation of **HED-CKKS**, accompanying the paper *"HED-CKKS: Efficient Homomorphic Edit Distance Computation"*. It is built on [Lattigo v6](https://github.com/tuneinsight/lattigo).
 
-- Go version: `go1.23.3 linux/amd64`
-- Project folder: `./lattigo/examples/singleparty/ckks_bootstrapping/slim`
+> **Note:** This code is a proof-of-concept and is intended for research and reproducibility purposes only. It is not production-ready.
 
-가끔 내부 module을 수정해야 할 때가 있어서, lattigo 폴더를 통째로 넣어놨습니다.
-해당 폴더에서 아래 명령어를 실행하면 코드가 돌아갑니다.
+## Repository Structure
+
+```
+banded_HED/
+└── lattigo/
+    └── examples/
+        └── singleparty/
+            └── ckks_bootstrapping/
+                └── slim/    # HED-CKKS implementation and experiment code
+```
+
+## Requirements
+
+- Go 1.23.3 (linux/amd64)
+- Memory: **128 GB RAM**
+- Lattigo v6 (included in this repository under `lattigo/`)
+
+## Getting Started
 
 ```bash
+git clone https://github.com/Yuria20/banded_HED.git
+cd banded_HED
+```
+
+## Reproducing the Experiments
+
+The code for all experiments reported in the paper is located in `lattigo/examples/singleparty/ckks_bootstrapping/slim`. Running `go run .` in that directory reproduces the results.
+
+```bash
+cd lattigo/examples/singleparty/ckks_bootstrapping/slim
 go run .
 ```
 
----
-
-## 1. 사소한 변경사항
-
-1. 가독성을 위해 문자 공간의 크기를 나타내던 `char_size`를 Context 내부에 할당하고,
-   `char_size`를 사용하던 모든 함수들을 변경하였습니다.
-
-2. 이전 branch에서 만든 Equality 연산을 활용하여 `dp/dp_module.go` 에 `EqTable` 함수를
-   작성하였습니다.
-
-```go
-type EqTable struct {
-	Deltas          [][]*rlwe.Ciphertext
-	CurrAntiDiagIdx int
-}
-
-func GenEqTable(cc he.Context, strct1 he.StrCipher, strct2 he.StrCipher) EqTable {
-
-	var E EqTable
-	E.Deltas = make([][]*rlwe.Ciphertext, strct1.Length)
-	E.CurrAntiDiagIdx = 0
-
-	for i := 0; i < strct1.Length; i++ {
-		E.Deltas[i] = make([]*rlwe.Ciphertext, strct2.Length)
-		for j := 0; j < strct2.Length; j++ {
-			E.Deltas[i][j], _ = EvalEQ_exp(cc, 0, strct1.Cipher[i], strct2.Cipher[j])
-		}
-	}
-
-	return E
-}
-```
+Experiments are run single-threaded for string lengths m = 8, 128, and 256. Timings depend on the machine, so absolute numbers may differ from those reported in the paper.
